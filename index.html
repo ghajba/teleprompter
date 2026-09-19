@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teleprompter Web App – Coming Soon</title>
+  <meta name="description" content="A lightweight, privacy-focused, zero-dependency browser-based teleprompter designed for smooth 60+ FPS scrolling and offline PWA capability.">
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: rgba(26, 34, 52, 0.7);
+      --card-border: rgba(255, 255, 255, 0.1);
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-glow: rgba(56, 189, 248, 0.15);
+      --badge-bg: rgba(56, 189, 248, 0.12);
+      --badge-border: rgba(56, 189, 248, 0.3);
+      --btn-bg: #0284c7;
+      --btn-hover: #0369a1;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      line-height: 1.6;
+      background-image: 
+        radial-gradient(ellipse at 50% 20%, rgba(56, 189, 248, 0.12) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 80%, rgba(14, 165, 233, 0.08) 0%, transparent 50%);
+    }
+
+    .container {
+      max-width: 720px;
+      width: 100%;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 1.25rem;
+      padding: 2.5rem 2rem;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      text-align: center;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.35rem 0.85rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--accent);
+      background: var(--badge-bg);
+      border: 1px solid var(--badge-border);
+      border-radius: 9999px;
+      margin-bottom: 1.5rem;
+    }
+
+    .badge-pulse {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: var(--accent);
+      box-shadow: 0 0 8px var(--accent);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+
+    h1 {
+      font-size: clamp(2rem, 5vw, 2.75rem);
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      margin-bottom: 0.75rem;
+      line-height: 1.15;
+    }
+
+    h1 span {
+      background: linear-gradient(135deg, #ffffff 40%, var(--accent) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    p.lead {
+      color: var(--text-muted);
+      font-size: 1.125rem;
+      margin-bottom: 2rem;
+      max-width: 580px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1rem;
+      text-align: left;
+      margin-bottom: 2.25rem;
+    }
+
+    .feature-item {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 0.75rem;
+      padding: 1rem 1.15rem;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+
+    .feature-item:hover {
+      border-color: rgba(56, 189, 248, 0.3);
+      transform: translateY(-2px);
+    }
+
+    .feature-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.35rem;
+    }
+
+    .feature-desc {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .actions {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      border-radius: 0.6rem;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+
+    .btn-primary {
+      background-color: var(--btn-bg);
+      color: #ffffff;
+      box-shadow: 0 4px 14px rgba(2, 132, 199, 0.35);
+    }
+
+    .btn-primary:hover {
+      background-color: var(--btn-hover);
+      box-shadow: 0 6px 20px rgba(2, 132, 199, 0.5);
+      transform: translateY(-1px);
+    }
+
+    .footer {
+      margin-top: 2rem;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .footer a {
+      color: var(--text-muted);
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="badge">
+      <div class="badge-pulse"></div>
+      Under Active Development
+    </div>
+    <h1>Teleprompter <span>Web App</span></h1>
+    <p class="lead">
+      A lightweight, privacy-focused, zero-dependency browser-based teleprompter built for smooth 60+ FPS scrolling and offline presentation workflows.
+    </p>
+
+    <div class="features-grid">
+      <div class="feature-item">
+        <div class="feature-title">⚡ 60+ FPS Fluid Scroll</div>
+        <div class="feature-desc">Sub-pixel precision engine using requestAnimationFrame and GPU hardware transforms.</div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-title">🔒 100% Offline & Private</div>
+        <div class="feature-desc">Zero tracking or external calls. Your scripts stay strictly in local storage.</div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-title">🪞 Physical Glass Mirroring</div>
+        <div class="feature-desc">Instant horizontal reflection mode designed for beam-splitter prompter glass rigs.</div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-title">📱 PWA & Shortcut Driven</div>
+        <div class="feature-desc">Installable to desktop or mobile with ergonomic keyboard and presentation controls.</div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <a href="https://github.com/ghajba/teleprompter" class="btn btn-primary" target="_blank" rel="noopener noreferrer">
+        <svg height="18" width="18" viewBox="0 0 16 16" fill="currentColor">
+          <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
+        </svg>
+        Follow Development on GitHub
+      </a>
+    </div>
+
+    <div class="footer">
+      Licensed under the <a href="https://github.com/ghajba/teleprompter/blob/main/LICENSE">MIT License</a> &copy; 2026 G&aacute;bor L&aacute;szl&oacute; Hajba
+    </div>
+  </div>
+</body>
+</html>
