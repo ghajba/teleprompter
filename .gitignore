@@ -1,0 +1,15 @@
+# Belső tervek és dokumentációk (kizárva a Gitből)
+.plan/
+.tasks/
+REQUIREMENTS.md
+
+# IDE és szerkesztő beállítások
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Operációs rendszer fájlok
+Thumbs.db
+Desktop.ini
+.DS_Store
