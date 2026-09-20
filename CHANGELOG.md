@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.1] - 2026-09-20
+
+### Fixed
+- **Markdown Empty Line Gap Normalization:** Fixed an issue where a single empty line in Markdown formatting produced an excessively large vertical gap (over 200px) on both desktop and mobile screens.
+- **Removed Phantom Whitespace Between Block Elements:** Switched `.prompter-text-inner` to `white-space: normal` (with `.plain-text` class for unformatted scripts) and joined Markdown output without newline delimiters, eliminating unwanted newline text nodes between HTML paragraphs.
+- **Natural Paragraph Spacing:** Standardized paragraph margins (`margin: 0 0 0.45em 0`) so that single blank lines serve as clean, readable paragraph delimiters, while multiple consecutive blank lines insert subtle, proportional spacing (`height: 0.5em`).
+
+---
+
 ## [1.0.0] - 2026-09-20
 
 ### General Availability (v1.0 Milestone)

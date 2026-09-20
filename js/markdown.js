@@ -73,12 +73,14 @@ export function renderMarkdown(md) {
   const htmlOut = [];
   let inList = false;
   let listType = 'ul';
+  let emptyLineCount = 0;
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
 
     // Horizontal rule / Pause bar (--- or *** or ___)
     if (/^(\s*[-*_]\s*){3,}$/.test(line)) {
+      emptyLineCount = 0;
       if (inList) { htmlOut.push(`</${listType}>`); inList = false; }
       htmlOut.push('<div class="prompter-pause-bar" title="Pause / Break"><span>⏸ PAUSE / BREAK</span></div>');
       continue;
@@ -87,6 +89,7 @@ export function renderMarkdown(md) {
     // Headings (# H1, ## H2, ### H3, #### H4)
     const headingMatch = line.match(/^(#{1,4})\s+(.+)$/);
     if (headingMatch) {
+      emptyLineCount = 0;
       if (inList) { htmlOut.push(`</${listType}>`); inList = false; }
       const level = headingMatch[1].length;
       const content = parseInline(headingMatch[2]);
@@ -97,6 +100,7 @@ export function renderMarkdown(md) {
     // Bullet lists (- item or * item)
     const bulletMatch = line.match(/^[\t ]*[-*+]\s+(.+)$/);
     if (bulletMatch) {
+      emptyLineCount = 0;
       if (!inList || listType !== 'ul') {
         if (inList) htmlOut.push(`</${listType}>`);
         htmlOut.push('<ul class="prompter-list">');
@@ -110,6 +114,7 @@ export function renderMarkdown(md) {
     // Numbered lists (1. item)
     const numListMatch = line.match(/^[\t ]*(\d+)\.\s+(.+)$/);
     if (numListMatch) {
+      emptyLineCount = 0;
       if (!inList || listType !== 'ol') {
         if (inList) htmlOut.push(`</${listType}>`);
         htmlOut.push('<ol class="prompter-list">');
@@ -126,11 +131,18 @@ export function renderMarkdown(md) {
       inList = false;
     }
 
-    // Empty line / paragraph break
+    // Empty line / paragraph separator
     if (!line.trim()) {
-      htmlOut.push('<div class="prompter-line-break"></div>');
+      emptyLineCount++;
+      // The first empty line simply acts as a paragraph delimiter (spacing handled by <p> margin).
+      // Only subsequent consecutive empty lines (> 1) insert an explicit visual spacer.
+      if (emptyLineCount > 1) {
+        htmlOut.push('<div class="prompter-line-break"></div>');
+      }
       continue;
     }
+
+    emptyLineCount = 0;
 
     // Regular paragraph line
     htmlOut.push(`<p class="prompter-p">${parseInline(line)}</p>`);
@@ -140,5 +152,5 @@ export function renderMarkdown(md) {
     htmlOut.push(`</${listType}>`);
   }
 
-  return htmlOut.join('\n');
+  return htmlOut.join('');
 }
