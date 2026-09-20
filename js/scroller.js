@@ -30,8 +30,9 @@ class ScrollerEngine {
           this._stopLoop();
         }
       }
-      if (changedKeys.includes('text')) {
-        this._updateMaxScroll();
+      if (changedKeys.includes('text') || changedKeys.includes('fontSize') || changedKeys.includes('marginWidth')) {
+        // Defer scroll boundary calculation slightly to let DOM layout settle
+        setTimeout(() => this._updateMaxScroll(), 20);
       }
     });
   }
@@ -57,15 +58,27 @@ class ScrollerEngine {
   }
 
   /**
-   * Recalculates maximum scrollable distance based on content height.
+   * Recalculates maximum scrollable distance based on actual rendered text height.
+   * The text should be able to scroll until the very last line passes the eyeline guide.
    * @private
    */
   _updateMaxScroll() {
-    if (!this._contentEl) return;
-    const contentHeight = this._contentEl.scrollHeight;
-    const viewportHeight = window.innerHeight || 800;
-    // Allow text to scroll completely past the eyeline
-    this._maxScrollY = Math.max(0, contentHeight - (viewportHeight * 0.2));
+    if (!this._contentEl || typeof window === 'undefined') return;
+
+    try {
+      const style = window.getComputedStyle ? window.getComputedStyle(this._contentEl) : null;
+      const paddingTop = style ? (parseFloat(style.paddingTop) || 0) : 0;
+      const paddingBottom = style ? (parseFloat(style.paddingBottom) || 0) : 0;
+      const totalScrollHeight = this._contentEl.scrollHeight || 0;
+
+      // The actual height of the text content itself (excluding top/bottom padding)
+      const textHeight = Math.max(100, totalScrollHeight - paddingTop - paddingBottom);
+
+      // Scrollable distance: travel the entire height of the text + comfortable 100px reading cushion
+      this._maxScrollY = Math.max(100, textHeight + 100);
+    } catch {
+      this._maxScrollY = Math.max(100, (this._contentEl.scrollHeight || 800) * 0.7);
+    }
   }
 
   /**
@@ -110,13 +123,17 @@ class ScrollerEngine {
       const direction = reverseScroll ? -1 : 1;
       this._scrollY += direction * speed * dt;
 
-      // Clamp scroll boundaries
+      // Clamp lower scroll boundary
       if (this._scrollY < 0) {
         this._scrollY = 0;
       }
-      if (this._maxScrollY > 0 && this._scrollY > this._maxScrollY + 200) {
-        // Automatically pause when text reaches the end
+
+      // If reached the end of the text, gracefully stop at the boundary
+      if (this._maxScrollY > 0 && this._scrollY >= this._maxScrollY) {
+        this._scrollY = this._maxScrollY;
+        this.render();
         this.pause();
+        return;
       }
 
       this.render();
@@ -166,12 +183,12 @@ class ScrollerEngine {
     const progress = this.getProgressPercent();
     const remainingScroll = Math.max(0, this._maxScrollY - this._scrollY);
 
-    // Approximate time based on pixels remaining and speed
+    // Accurate time based on actual remaining scroll distance
     const remainingSeconds = speed > 0 ? Math.round(remainingScroll / speed) : 0;
     const elapsedSeconds = speed > 0 ? Math.round(this._scrollY / speed) : 0;
-    const totalEstimatedSeconds = elapsedSeconds + remainingSeconds;
 
-    // Estimate WPM based on total script words and estimated total duration
+    // Approximate WPM based on total script words and estimated total duration
+    const totalEstimatedSeconds = speed > 0 ? Math.round(this._maxScrollY / speed) : 0;
     const estimatedMinutes = totalEstimatedSeconds / 60;
     const wpm = estimatedMinutes > 0 ? Math.round(words / estimatedMinutes) : 130;
 
@@ -206,11 +223,12 @@ class ScrollerEngine {
   }
 
   /**
-   * Directly sets the vertical scroll position.
+   * Directly sets the vertical scroll position (with boundary clamping).
    * @param {number} y 
    */
   setScrollY(y) {
-    this._scrollY = Math.max(0, y);
+    const max = this._maxScrollY > 0 ? this._maxScrollY : 10000;
+    this._scrollY = Math.max(0, Math.min(y, max));
     this.render();
   }
 
@@ -240,10 +258,16 @@ class ScrollerEngine {
   }
 
   /**
-   * Starts playback with optional countdown.
+   * Starts playback.
+   * If already at or past the end of the text, automatically restarts from top.
    */
   play() {
     const { countdownDuration } = store.getState();
+
+    // If script reached the end, automatically rewind to start
+    if (this._maxScrollY > 0 && this._scrollY >= this._maxScrollY) {
+      this.reset();
+    }
 
     if (countdownDuration > 0 && this._scrollY === 0) {
       this._startCountdown(countdownDuration);

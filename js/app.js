@@ -77,6 +77,10 @@ document.addEventListener('DOMContentLoaded', () => {
       readingProgressBar.classList.toggle('hidden', !state.showProgressBar);
     }
 
+    if (changedKeys.includes('countdownShowScript') && countdownOverlay) {
+      countdownOverlay.classList.toggle('transparent-bg', !!state.countdownShowScript);
+    }
+
     if (changedKeys.includes('text') && prompterText) {
       prompterText.textContent = state.text;
     }

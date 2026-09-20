@@ -3,7 +3,7 @@
  * Strategy: Cache-First for ultra-fast load and 100% offline-first reliability.
  */
 
-const CACHE_NAME = 'teleprompter-v1.1.0';
+const CACHE_NAME = 'teleprompter-v1.2.0';
 
 const PRECACHE_ASSETS = [
   './',

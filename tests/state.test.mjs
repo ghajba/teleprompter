@@ -51,6 +51,7 @@ const initialState = store.getState();
 assert.equal(initialState.speed, DEFAULT_STATE.speed);
 assert.equal(initialState.isPlaying, false);
 assert.equal(initialState.countdownDuration, 3);
+assert.equal(initialState.countdownShowScript, true);
 assert.equal(initialState.showProgressBar, true);
 assert.equal(initialState.reverseScroll, false);
 assert.equal(typeof initialState.text, 'string');

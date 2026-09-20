@@ -40,6 +40,7 @@ export class DrawerController {
 
     // Timing & Direction inputs
     this._countdownSelect = document.getElementById('countdownSelect');
+    this._countdownShowScriptToggle = document.getElementById('countdownShowScriptToggle');
     this._progressBarToggle = document.getElementById('progressBarToggle');
     this._reverseToggle = document.getElementById('reverseToggle');
 
@@ -183,6 +184,13 @@ export class DrawerController {
       });
     }
 
+    // Countdown show script toggle
+    if (this._countdownShowScriptToggle) {
+      this._countdownShowScriptToggle.addEventListener('change', (e) => {
+        store.setState({ countdownShowScript: e.target.checked });
+      });
+    }
+
     // Progress bar toggle
     if (this._progressBarToggle) {
       this._progressBarToggle.addEventListener('change', (e) => {
@@ -211,6 +219,10 @@ export class DrawerController {
   _syncFromStore(state, changedKeys) {
     if (changedKeys.includes('countdownDuration') && this._countdownSelect) {
       this._countdownSelect.value = String(state.countdownDuration);
+    }
+
+    if (changedKeys.includes('countdownShowScript') && this._countdownShowScriptToggle) {
+      this._countdownShowScriptToggle.checked = !!state.countdownShowScript;
     }
 
     if (changedKeys.includes('showProgressBar') && this._progressBarToggle) {

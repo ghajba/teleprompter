@@ -1,5 +1,5 @@
 /**
- * Keyboard shortcuts and prompter viewport click interaction handlers.
+ * Keyboard shortcuts, mouse wheel scrolling, and touch gesture handlers.
  */
 
 import { store } from './state.js';
@@ -17,14 +17,26 @@ export class ControlsManager {
     this._isDrawerOpen = options.isDrawerOpen;
     this._closeDrawer = options.closeDrawer;
 
+    this._touchStartY = null;
+    this._touchStartScrollY = 0;
+    this._touchMoved = false;
+
     this._onKeyDown = this._onKeyDown.bind(this);
     this._onContainerClick = this._onContainerClick.bind(this);
+    this._onWheel = this._onWheel.bind(this);
+    this._onTouchStart = this._onTouchStart.bind(this);
+    this._onTouchMove = this._onTouchMove.bind(this);
+    this._onTouchEnd = this._onTouchEnd.bind(this);
   }
 
   init() {
     window.addEventListener('keydown', this._onKeyDown);
     if (this._container) {
       this._container.addEventListener('click', this._onContainerClick);
+      this._container.addEventListener('wheel', this._onWheel, { passive: false });
+      this._container.addEventListener('touchstart', this._onTouchStart, { passive: true });
+      this._container.addEventListener('touchmove', this._onTouchMove, { passive: false });
+      this._container.addEventListener('touchend', this._onTouchEnd, { passive: true });
     }
   }
 
@@ -32,7 +44,51 @@ export class ControlsManager {
     window.removeEventListener('keydown', this._onKeyDown);
     if (this._container) {
       this._container.removeEventListener('click', this._onContainerClick);
+      this._container.removeEventListener('wheel', this._onWheel);
+      this._container.removeEventListener('touchstart', this._onTouchStart);
+      this._container.removeEventListener('touchmove', this._onTouchMove);
+      this._container.removeEventListener('touchend', this._onTouchEnd);
     }
+  }
+
+  /**
+   * Handles mouse wheel and trackpad scroll on the prompter canvas.
+   * @param {WheelEvent} e 
+   * @private
+   */
+  _onWheel(e) {
+    // If mouse is interacting with the drawer or an active input, allow normal scrolling
+    if (e.target.closest('#drawer') || e.target.closest('textarea')) return;
+
+    e.preventDefault();
+    const currentScroll = scroller.getScrollY();
+    scroller.setScrollY(currentScroll + e.deltaY);
+  }
+
+  /**
+   * Touch drag handlers for mobile and tablet touchscreens.
+   * @private
+   */
+  _onTouchStart(e) {
+    if (e.target.closest('#drawer') || e.target.closest('button')) return;
+    this._touchStartY = e.touches[0].clientY;
+    this._touchStartScrollY = scroller.getScrollY();
+    this._touchMoved = false;
+  }
+
+  _onTouchMove(e) {
+    if (this._touchStartY === null || e.target.closest('#drawer')) return;
+    const currentY = e.touches[0].clientY;
+    const deltaY = this._touchStartY - currentY;
+    if (Math.abs(deltaY) > 6) {
+      e.preventDefault();
+      this._touchMoved = true;
+      scroller.setScrollY(this._touchStartScrollY + deltaY);
+    }
+  }
+
+  _onTouchEnd() {
+    this._touchStartY = null;
   }
 
   /**
@@ -55,7 +111,6 @@ export class ControlsManager {
     // If user is actively typing in a text field, allow normal typing
     if (this._isEditing(e)) {
       if (e.key === 'Escape') {
-        // Blur input and optionally close drawer on Esc
         document.activeElement.blur();
         if (this._closeDrawer) this._closeDrawer();
       }
@@ -89,7 +144,7 @@ export class ControlsManager {
       case 'PageUp':
       case 'ArrowLeft':
         e.preventDefault();
-        scroller.setScrollY(Math.max(0, scroller.getScrollY() - 160));
+        scroller.setScrollY(scroller.getScrollY() - 160);
         break;
 
       case 'PageDown':
@@ -148,6 +203,10 @@ export class ControlsManager {
    * @param {MouseEvent} e 
    */
   _onContainerClick(e) {
+    if (this._touchMoved) {
+      this._touchMoved = false;
+      return;
+    }
     // Do not trigger if clicking on interactive widgets or drawer
     if (e.target.closest('#drawer') || e.target.closest('#drawerToggle') || e.target.closest('button') || e.target.closest('input')) {
       return;

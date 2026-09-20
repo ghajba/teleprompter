@@ -224,6 +224,25 @@
   pointer-events: auto;
 }
 
+/* Transparent mode: script text stays completely sharp and readable behind the countdown */
+.countdown-overlay.transparent-bg {
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.countdown-overlay.transparent-bg .countdown-number {
+  text-shadow: 0 0 30px rgba(0, 0, 0, 0.95), 0 0 60px rgba(56, 189, 248, 1), 0 6px 20px #000000;
+}
+
+.countdown-overlay.transparent-bg .countdown-sub {
+  background: rgba(15, 23, 42, 0.85);
+  padding: 0.4rem 1.1rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7);
+}
+
 .countdown-box {
   display: flex;
   flex-direction: column;

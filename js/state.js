@@ -36,6 +36,7 @@ Press R or HOME to reset to the top.`,
   marginWidth: 75, // percentage of viewport width (40% - 100%)
   eyelinePosition: 35, // percentage from top of screen (15% - 70%)
   countdownDuration: 3, // countdown seconds before starting (0, 3, 5)
+  countdownShowScript: true, // keep script visible without blur during countdown
   showProgressBar: true, // visual reading progress bar at top of screen
   reverseScroll: false, // backwards scrolling flag
   isCountingDown: false // active countdown status
