@@ -58,6 +58,13 @@ class ScrollerEngine {
   }
 
   /**
+   * Public hook to recalculate scroll boundaries whenever text or styling changes.
+   */
+  updateBounds() {
+    this._updateMaxScroll();
+  }
+
+  /**
    * Recalculates maximum scrollable distance based on actual rendered text height.
    * The text should be able to scroll until the very last line passes the eyeline guide.
    * @private
@@ -66,18 +73,22 @@ class ScrollerEngine {
     if (!this._contentEl || typeof window === 'undefined') return;
 
     try {
-      const style = window.getComputedStyle ? window.getComputedStyle(this._contentEl) : null;
-      const paddingTop = style ? (parseFloat(style.paddingTop) || 0) : 0;
-      const paddingBottom = style ? (parseFloat(style.paddingBottom) || 0) : 0;
-      const totalScrollHeight = this._contentEl.scrollHeight || 0;
+      const inner = this._contentEl.querySelector('.prompter-text-inner') || this._contentEl;
+      const rawHeight = inner ? (inner.offsetHeight || inner.scrollHeight || 0) : 0;
+      const viewportHeight = window.innerHeight || 800;
 
-      // The actual height of the text content itself (excluding top/bottom padding)
-      const textHeight = Math.max(100, totalScrollHeight - paddingTop - paddingBottom);
+      // Fallback estimate based on word count if layout has not completed yet
+      const text = store.getState().text || '';
+      const trimmed = text.trim();
+      const words = trimmed ? trimmed.split(/\s+/).length : 0;
+      const estimatedHeight = Math.max(300, words * 12);
+      const textHeight = rawHeight > 50 ? rawHeight : estimatedHeight;
 
-      // Scrollable distance: travel the entire height of the text + comfortable 100px reading cushion
-      this._maxScrollY = Math.max(100, textHeight + 100);
+      // The text must scroll its full height so the final line reaches the eyeline,
+      // plus a 40% viewport height reading cushion so the speaker finishes speaking comfortably
+      this._maxScrollY = Math.max(300, Math.round(textHeight + (viewportHeight * 0.4)));
     } catch {
-      this._maxScrollY = Math.max(100, (this._contentEl.scrollHeight || 800) * 0.7);
+      this._maxScrollY = 3000;
     }
   }
 
@@ -183,18 +194,18 @@ class ScrollerEngine {
     const progress = this.getProgressPercent();
     const remainingScroll = Math.max(0, this._maxScrollY - this._scrollY);
 
-    // Accurate time based on actual remaining scroll distance
+    // Accurate remaining time based on actual remaining scroll distance
     const remainingSeconds = speed > 0 ? Math.round(remainingScroll / speed) : 0;
     const elapsedSeconds = speed > 0 ? Math.round(this._scrollY / speed) : 0;
 
     // Approximate WPM based on total script words and estimated total duration
     const totalEstimatedSeconds = speed > 0 ? Math.round(this._maxScrollY / speed) : 0;
     const estimatedMinutes = totalEstimatedSeconds / 60;
-    const wpm = estimatedMinutes > 0 ? Math.round(words / estimatedMinutes) : 130;
+    const rawWpm = (estimatedMinutes > 0 && words > 0) ? Math.round(words / estimatedMinutes) : 130;
 
     return {
       words,
-      wpm: Math.min(Math.max(wpm, 40), 400),
+      wpm: Math.min(Math.max(rawWpm, 50), 300),
       remainingSeconds,
       elapsedSeconds,
       remainingFormatted: this._formatTime(remainingSeconds),

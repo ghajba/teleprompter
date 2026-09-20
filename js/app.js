@@ -22,6 +22,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const readingProgressBar = document.getElementById('readingProgressBar');
   const countdownOverlay = document.getElementById('countdownOverlay');
 
+  const prompterTextInner = document.getElementById('prompterTextInner');
+  if (prompterTextInner) {
+    prompterTextInner.textContent = store.getState().text || '';
+  }
+
   // Initialize UI controllers
   const drawerController = new DrawerController();
   const controlsManager = new ControlsManager({
@@ -81,12 +86,25 @@ document.addEventListener('DOMContentLoaded', () => {
       countdownOverlay.classList.toggle('transparent-bg', !!state.countdownShowScript);
     }
 
-    if (changedKeys.includes('text') && prompterText) {
-      prompterText.textContent = state.text;
+    const prompterTextInner = document.getElementById('prompterTextInner');
+    if (changedKeys.includes('text')) {
+      if (prompterTextInner) {
+        prompterTextInner.textContent = state.text;
+      } else if (prompterText) {
+        prompterText.textContent = state.text;
+      }
     }
 
     if (changedKeys.includes('isMirrored') && mirrorBox) {
       mirrorBox.classList.toggle('mirrored', state.isMirrored);
+    }
+
+    // Trigger scroller boundary recalculation on any layout mutation
+    const layoutAffectingKeys = ['text', 'fontSize', 'marginWidth', 'fontFamily', 'eyelinePosition'];
+    if (changedKeys.some(k => layoutAffectingKeys.includes(k))) {
+      requestAnimationFrame(() => {
+        scroller.updateBounds();
+      });
     }
 
     // HUD status updates

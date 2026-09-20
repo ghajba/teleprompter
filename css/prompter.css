@@ -57,6 +57,16 @@
   transform: translateY(0px);
 }
 
+.prompter-text-inner {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+}
+
 /* ==========================================================================
    Eyeline Guide (Visual Reading Anchor)
    ========================================================================== */

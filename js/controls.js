@@ -31,23 +31,25 @@ export class ControlsManager {
 
   init() {
     window.addEventListener('keydown', this._onKeyDown);
+    window.addEventListener('wheel', this._onWheel, { passive: false });
+    window.addEventListener('touchstart', this._onTouchStart, { passive: true });
+    window.addEventListener('touchmove', this._onTouchMove, { passive: false });
+    window.addEventListener('touchend', this._onTouchEnd, { passive: true });
+
     if (this._container) {
       this._container.addEventListener('click', this._onContainerClick);
-      this._container.addEventListener('wheel', this._onWheel, { passive: false });
-      this._container.addEventListener('touchstart', this._onTouchStart, { passive: true });
-      this._container.addEventListener('touchmove', this._onTouchMove, { passive: false });
-      this._container.addEventListener('touchend', this._onTouchEnd, { passive: true });
     }
   }
 
   destroy() {
     window.removeEventListener('keydown', this._onKeyDown);
+    window.removeEventListener('wheel', this._onWheel);
+    window.removeEventListener('touchstart', this._onTouchStart);
+    window.removeEventListener('touchmove', this._onTouchMove);
+    window.removeEventListener('touchend', this._onTouchEnd);
+
     if (this._container) {
       this._container.removeEventListener('click', this._onContainerClick);
-      this._container.removeEventListener('wheel', this._onWheel);
-      this._container.removeEventListener('touchstart', this._onTouchStart);
-      this._container.removeEventListener('touchmove', this._onTouchMove);
-      this._container.removeEventListener('touchend', this._onTouchEnd);
     }
   }
 
@@ -58,7 +60,9 @@ export class ControlsManager {
    */
   _onWheel(e) {
     // If mouse is interacting with the drawer or an active input, allow normal scrolling
-    if (e.target.closest('#drawer') || e.target.closest('textarea')) return;
+    if (e.target.closest('#drawer') || e.target.closest('textarea') || e.target.closest('input')) {
+      return;
+    }
 
     e.preventDefault();
     const currentScroll = scroller.getScrollY();
