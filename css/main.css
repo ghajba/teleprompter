@@ -1,0 +1,71 @@
+/* ==========================================================================
+   Base styles, Design Tokens & Reset
+   ========================================================================== */
+
+:root {
+  /* Dynamic prompter tokens (updated by state.js) */
+  --font-size: 48px;
+  --font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --text-color: #ffffff;
+  --bg-color: #000000;
+  --margin-width: 75%;
+  --eyeline-top: 35%;
+
+  /* UI chrome tokens */
+  --drawer-bg: rgba(15, 23, 42, 0.92);
+  --drawer-border: rgba(255, 255, 255, 0.12);
+  --drawer-text: #f1f5f9;
+  --drawer-muted: #94a3b8;
+  --accent: #38bdf8;
+  --accent-hover: #0284c7;
+  --surface: rgba(255, 255, 255, 0.05);
+  --surface-hover: rgba(255, 255, 255, 0.1);
+  --danger: #ef4444;
+  --success: #22c55e;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden; /* Prompter uses hardware transforms, disable default scrollbars */
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  font-family: var(--font-family);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  user-select: none; /* Prevent accidental selection while clicking prompter */
+}
+
+/* Accessible hidden utility */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+/* Custom scrollbar for drawer textarea */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.35);
+}

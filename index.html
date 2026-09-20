@@ -3,233 +3,166 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Teleprompter Web App – Coming Soon</title>
-  <meta name="description" content="A lightweight, privacy-focused, zero-dependency browser-based teleprompter designed for smooth 60+ FPS scrolling and offline PWA capability.">
-  <style>
-    :root {
-      --bg: #090d16;
-      --card-bg: rgba(26, 34, 52, 0.7);
-      --card-border: rgba(255, 255, 255, 0.1);
-      --text: #f8fafc;
-      --text-muted: #94a3b8;
-      --accent: #38bdf8;
-      --accent-glow: rgba(56, 189, 248, 0.15);
-      --badge-bg: rgba(56, 189, 248, 0.12);
-      --badge-border: rgba(56, 189, 248, 0.3);
-      --btn-bg: #0284c7;
-      --btn-hover: #0369a1;
-    }
+  <title>Teleprompter Web App</title>
+  <meta name="description" content="A lightweight, privacy-focused, zero-dependency browser-based teleprompter designed for smooth 60+ FPS scrolling.">
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
-      background-color: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 1.5rem;
-      line-height: 1.6;
-      background-image: 
-        radial-gradient(ellipse at 50% 20%, rgba(56, 189, 248, 0.12) 0%, transparent 60%),
-        radial-gradient(ellipse at 80% 80%, rgba(14, 165, 233, 0.08) 0%, transparent 50%);
-    }
-
-    .container {
-      max-width: 720px;
-      width: 100%;
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 1.25rem;
-      padding: 2.5rem 2rem;
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-      text-align: center;
-    }
-
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.35rem 0.85rem;
-      font-size: 0.85rem;
-      font-weight: 600;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      color: var(--accent);
-      background: var(--badge-bg);
-      border: 1px solid var(--badge-border);
-      border-radius: 9999px;
-      margin-bottom: 1.5rem;
-    }
-
-    .badge-pulse {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background-color: var(--accent);
-      box-shadow: 0 0 8px var(--accent);
-      animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.4; transform: scale(0.85); }
-    }
-
-    h1 {
-      font-size: clamp(2rem, 5vw, 2.75rem);
-      font-weight: 800;
-      letter-spacing: -0.025em;
-      margin-bottom: 0.75rem;
-      line-height: 1.15;
-    }
-
-    h1 span {
-      background: linear-gradient(135deg, #ffffff 40%, var(--accent) 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    p.lead {
-      color: var(--text-muted);
-      font-size: 1.125rem;
-      margin-bottom: 2rem;
-      max-width: 580px;
-      margin-left: auto;
-      margin-right: auto;
-    }
-
-    .features-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 1rem;
-      text-align: left;
-      margin-bottom: 2.25rem;
-    }
-
-    .feature-item {
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      border-radius: 0.75rem;
-      padding: 1rem 1.15rem;
-      transition: border-color 0.2s, transform 0.2s;
-    }
-
-    .feature-item:hover {
-      border-color: rgba(56, 189, 248, 0.3);
-      transform: translateY(-2px);
-    }
-
-    .feature-title {
-      font-size: 0.95rem;
-      font-weight: 700;
-      color: #fff;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      margin-bottom: 0.35rem;
-    }
-
-    .feature-desc {
-      font-size: 0.85rem;
-      color: var(--text-muted);
-    }
-
-    .actions {
-      display: flex;
-      justify-content: center;
-      gap: 1rem;
-      flex-wrap: wrap;
-    }
-
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.75rem 1.5rem;
-      font-size: 0.95rem;
-      font-weight: 600;
-      border-radius: 0.6rem;
-      text-decoration: none;
-      transition: all 0.2s ease;
-      cursor: pointer;
-    }
-
-    .btn-primary {
-      background-color: var(--btn-bg);
-      color: #ffffff;
-      box-shadow: 0 4px 14px rgba(2, 132, 199, 0.35);
-    }
-
-    .btn-primary:hover {
-      background-color: var(--btn-hover);
-      box-shadow: 0 6px 20px rgba(2, 132, 199, 0.5);
-      transform: translateY(-1px);
-    }
-
-    .footer {
-      margin-top: 2rem;
-      font-size: 0.8rem;
-      color: var(--text-muted);
-    }
-
-    .footer a {
-      color: var(--text-muted);
-      text-decoration: underline;
-    }
-  </style>
+  <!-- Core Stylesheets -->
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/prompter.css">
+  <link rel="stylesheet" href="css/sidebar.css">
 </head>
 <body>
-  <div class="container">
-    <div class="badge">
-      <div class="badge-pulse"></div>
-      Under Active Development
-    </div>
-    <h1>Teleprompter <span>Web App</span></h1>
-    <p class="lead">
-      A lightweight, privacy-focused, zero-dependency browser-based teleprompter built for smooth 60+ FPS scrolling and offline presentation workflows.
-    </p>
 
-    <div class="features-grid">
-      <div class="feature-item">
-        <div class="feature-title">⚡ 60+ FPS Fluid Scroll</div>
-        <div class="feature-desc">Sub-pixel precision engine using requestAnimationFrame and GPU hardware transforms.</div>
-      </div>
-      <div class="feature-item">
-        <div class="feature-title">🔒 100% Offline & Private</div>
-        <div class="feature-desc">Zero tracking or external calls. Your scripts stay strictly in local storage.</div>
-      </div>
-      <div class="feature-item">
-        <div class="feature-title">🪞 Physical Glass Mirroring</div>
-        <div class="feature-desc">Instant horizontal reflection mode designed for beam-splitter prompter glass rigs.</div>
-      </div>
-      <div class="feature-item">
-        <div class="feature-title">📱 PWA & Shortcut Driven</div>
-        <div class="feature-desc">Installable to desktop or mobile with ergonomic keyboard and presentation controls.</div>
-      </div>
-    </div>
+  <!-- Floating Heads-Up Display (Status & Speed) -->
+  <aside id="hud" class="prompter-hud" aria-live="polite">
+    <span id="hudDot" class="hud-status-dot"></span>
+    <span id="hudStatus">Paused</span>
+    <span id="hudSpeed" class="hud-speed-badge">35 px/s</span>
+  </aside>
 
-    <div class="actions">
-      <a href="https://github.com/ghajba/teleprompter" class="btn btn-primary" target="_blank" rel="noopener noreferrer">
-        <svg height="18" width="18" viewBox="0 0 16 16" fill="currentColor">
-          <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
-        </svg>
-        Follow Development on GitHub
-      </a>
-    </div>
+  <!-- Floating Settings & Script Drawer Toggle -->
+  <button id="drawerToggle" class="drawer-toggle-btn" aria-label="Open Settings and Script Editor">
+    <svg viewBox="0 0 24 24">
+      <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
+    </svg>
+    <span>Settings & Script</span>
+  </button>
 
-    <div class="footer">
-      Licensed under the <a href="https://github.com/ghajba/teleprompter/blob/main/LICENSE">MIT License</a> &copy; 2026 G&aacute;bor L&aacute;szl&oacute; Hajba
-    </div>
+  <!-- Eyeline Guide (Visual Reading Anchor) -->
+  <div id="eyelineBand" class="eyeline-band"></div>
+  <div id="eyelineGuide" class="eyeline-guide">
+    <div class="eyeline-pointer-left"></div>
+    <div class="eyeline-pointer-right"></div>
   </div>
+
+  <!-- Prompter Main Canvas -->
+  <main id="prompterContainer" class="prompter-container">
+    <div id="mirrorBox" class="prompter-mirror-box">
+      <div class="prompter-viewport">
+        <div id="prompterText" class="prompter-content"></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Collapsible Settings & Script Drawer -->
+  <aside id="drawer" class="drawer" aria-label="Prompter configuration drawer">
+    <header class="drawer-header">
+      <h2 class="drawer-title">⚙️ Prompter Controls</h2>
+      <button id="drawerClose" class="drawer-close-btn" aria-label="Close drawer">&times;</button>
+    </header>
+
+    <div class="drawer-body">
+      <!-- Section 1: Script Editor -->
+      <section class="drawer-section">
+        <div class="control-header">
+          <label for="scriptInput" class="section-label">Presentation Script</label>
+          <span class="script-meta">
+            <span id="wordCount">0 words</span> &bull; <span id="charCount">0 chars</span>
+          </span>
+        </div>
+        <textarea id="scriptInput" class="script-textarea" placeholder="Paste or type your presentation script here..."></textarea>
+      </section>
+
+      <!-- Section 2: Playback Action Buttons -->
+      <section class="drawer-section">
+        <span class="section-label">Playback</span>
+        <div class="btn-grid">
+          <button id="btnPlayPause" class="btn-ctrl btn-primary">▶ Play</button>
+          <button id="btnReset" class="btn-ctrl">↺ Reset Top</button>
+        </div>
+        <button id="btnFullscreen" class="btn-ctrl" style="margin-top: 0.4rem;">⛶ Toggle Fullscreen (F)</button>
+      </section>
+
+      <!-- Section 3: Speed Control -->
+      <section class="drawer-section">
+        <div class="control-header">
+          <label for="speedSlider" class="section-label">Scroll Speed</label>
+          <span id="speedValue" class="control-value">35 px/s</span>
+        </div>
+        <input type="range" id="speedSlider" min="5" max="150" step="1" value="35">
+      </section>
+
+      <!-- Section 4: Typography & Layout -->
+      <section class="drawer-section">
+        <span class="section-label">Display & Typography</span>
+
+        <div class="control-row">
+          <div class="control-header">
+            <label for="fontSizeSlider">Font Size</label>
+            <span id="fontSizeValue" class="control-value">48 px</span>
+          </div>
+          <input type="range" id="fontSizeSlider" min="24" max="96" step="2" value="48">
+        </div>
+
+        <div class="control-row" style="margin-top: 0.5rem;">
+          <div class="control-header">
+            <label for="marginSlider">Reading Column Width</label>
+            <span id="marginValue" class="control-value">75 %</span>
+          </div>
+          <input type="range" id="marginSlider" min="40" max="100" step="5" value="75">
+        </div>
+
+        <div class="control-row" style="margin-top: 0.5rem;">
+          <div class="control-header">
+            <label for="eyelineSlider">Eyeline Position</label>
+            <span id="eyelineValue" class="control-value">35 %</span>
+          </div>
+          <input type="range" id="eyelineSlider" min="15" max="70" step="1" value="35">
+        </div>
+
+        <!-- Mirror Toggle -->
+        <div class="control-row" style="margin-top: 0.75rem;">
+          <label class="toggle-switch-label">
+            <span>Mirror Flip (Glass Rig)</span>
+            <div class="switch">
+              <input type="checkbox" id="mirrorToggle">
+              <span class="slider-round"></span>
+            </div>
+          </label>
+        </div>
+
+        <!-- Font Family -->
+        <div class="control-row" style="margin-top: 0.75rem;">
+          <label for="fontFamilySelect" style="font-size: 0.85rem; margin-bottom: 0.25rem;">Font Family</label>
+          <select id="fontFamilySelect" class="select-input">
+            <option value="system-ui, -apple-system, sans-serif">Modern Sans-Serif (System)</option>
+            <option value="Georgia, Cambria, 'Times New Roman', serif">Classic Serif (Georgia)</option>
+            <option value="'Courier New', Courier, monospace">Monospace</option>
+          </select>
+        </div>
+
+        <!-- Color Themes -->
+        <div class="control-row" style="margin-top: 0.75rem;">
+          <label style="font-size: 0.85rem; margin-bottom: 0.25rem;">Contrast Theme</label>
+          <div class="theme-palette">
+            <button type="button" class="theme-pill theme-dark" data-bg="#000000" data-text="#ffffff">Dark</button>
+            <button type="button" class="theme-pill theme-amber" data-bg="#000000" data-text="#fbbf24">Amber</button>
+            <button type="button" class="theme-pill theme-green" data-bg="#000000" data-text="#22c55e">Green</button>
+            <button type="button" class="theme-pill theme-light" data-bg="#ffffff" data-text="#000000">Light</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 5: Keyboard Shortcuts Reference -->
+      <section class="drawer-section">
+        <span class="section-label">Keyboard Shortcuts</span>
+        <div class="shortcut-list">
+          <div class="shortcut-item"><span>Play / Pause</span><kbd>Space</kbd></div>
+          <div class="shortcut-item"><span>Adjust Speed</span><kbd>&uarr; / &darr;</kbd> or <kbd>[ / ]</kbd></div>
+          <div class="shortcut-item"><span>Reset to Top</span><kbd>R</kbd> or <kbd>Home</kbd></div>
+          <div class="shortcut-item"><span>Toggle Fullscreen</span><kbd>F</kbd></div>
+          <div class="shortcut-item"><span>Close Drawer</span><kbd>Esc</kbd></div>
+        </div>
+      </section>
+    </div>
+
+    <footer class="drawer-footer">
+      <span>MIT License</span>
+      <a href="https://github.com/ghajba/teleprompter" target="_blank" rel="noopener noreferrer">GitHub Repo &rarr;</a>
+    </footer>
+  </aside>
+
+  <!-- Application Bootstrap -->
+  <script type="module" src="js/app.js"></script>
 </body>
 </html>

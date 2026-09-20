@@ -1,0 +1,164 @@
+/* ==========================================================================
+   Prompter Viewport, Mirroring, Scrolling & Eyeline Guide
+   ========================================================================== */
+
+.prompter-container {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  cursor: pointer; /* Click anywhere on empty space to play/pause */
+}
+
+/* Isolates physical beam-splitter glass horizontal flip */
+.prompter-mirror-box {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: center center;
+}
+
+.prompter-mirror-box.mirrored {
+  transform: scaleX(-1);
+}
+
+/* Centralized reading column */
+.prompter-viewport {
+  width: var(--margin-width);
+  max-width: 100%;
+  height: 100%;
+  position: relative;
+  box-sizing: border-box;
+}
+
+/* The rolling text content element */
+.prompter-content {
+  position: relative;
+  /* Start reading right at the eyeline guide */
+  padding-top: var(--eyeline-top);
+  /* Allow the last line to scroll past the eyeline */
+  padding-bottom: 80vh;
+  font-size: var(--font-size);
+  font-family: var(--font-family);
+  color: var(--text-color);
+  line-height: 1.5;
+  letter-spacing: 0.01em;
+  word-wrap: break-word;
+  white-space: pre-wrap; /* Preserves author linebreaks */
+  user-select: none;
+  /* Hardware-accelerated GPU layer for 60+ FPS jitter-free movement */
+  will-change: transform;
+  transform: translateY(0px);
+}
+
+/* ==========================================================================
+   Eyeline Guide (Visual Reading Anchor)
+   ========================================================================== */
+
+.eyeline-guide {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: var(--eyeline-top);
+  height: 3px;
+  background: linear-gradient(90deg, 
+    rgba(56, 189, 248, 0.8) 0%, 
+    rgba(56, 189, 248, 0.25) 20%, 
+    rgba(56, 189, 248, 0.25) 80%, 
+    rgba(56, 189, 248, 0.8) 100%
+  );
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
+  pointer-events: none;
+  z-index: 10;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Reading pointer indicators on screen borders */
+.eyeline-pointer-left,
+.eyeline-pointer-right {
+  width: 0;
+  height: 0;
+  border-top: 9px solid transparent;
+  border-bottom: 9px solid transparent;
+}
+
+.eyeline-pointer-left {
+  border-left: 14px solid var(--accent);
+  margin-left: 4px;
+}
+
+.eyeline-pointer-right {
+  border-right: 14px solid var(--accent);
+  margin-right: 4px;
+}
+
+/* Focus tint area around eyeline */
+.eyeline-band {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: calc(var(--eyeline-top) - 30px);
+  height: 64px;
+  background: rgba(56, 189, 248, 0.04);
+  pointer-events: none;
+  z-index: 9;
+}
+
+/* ==========================================================================
+   HUD (Heads-Up Display Badge)
+   ========================================================================== */
+
+.prompter-hud {
+  position: fixed;
+  top: 1.25rem;
+  left: 1.25rem;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.45rem 0.9rem;
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 9999px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.85rem;
+  color: #e2e8f0;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+}
+
+.prompter-hud.autohide {
+  opacity: 0.2;
+}
+
+.prompter-hud.autohide:hover {
+  opacity: 1;
+}
+
+.hud-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #ef4444; /* Paused red */
+  transition: background-color 0.2s;
+}
+
+.hud-status-dot.playing {
+  background-color: #22c55e; /* Playing green */
+  box-shadow: 0 0 8px #22c55e;
+}
+
+.hud-speed-badge {
+  font-weight: 600;
+  color: var(--accent);
+}
