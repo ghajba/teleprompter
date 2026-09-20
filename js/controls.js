@@ -29,6 +29,12 @@ export class ControlsManager {
     this._touchStartScrollY = 0;
     this._touchMoved = false;
 
+    this._pullIndicator = null;
+    this._pullText = null;
+    this._pullIcon = null;
+    this._pullReady = false;
+    this._countdownCancelPending = false;
+
     this._btnTouchRewind = null;
     this._btnTouchPlayPause = null;
     this._btnTouchSpeedDown = null;
@@ -47,10 +53,17 @@ export class ControlsManager {
     window.addEventListener('wheel', this._onWheel, { passive: false });
     window.addEventListener('touchstart', this._onTouchStart, { passive: true });
     window.addEventListener('touchmove', this._onTouchMove, { passive: false });
-    window.addEventListener('touchend', this._onTouchEnd, { passive: true });
+    window.addEventListener('touchend', this._onTouchEnd, { passive: false });
 
     if (this._container) {
       this._container.addEventListener('click', this._onContainerClick);
+    }
+
+    // Pull to refresh banner elements
+    this._pullIndicator = document.getElementById('pullToRefresh');
+    if (this._pullIndicator) {
+      this._pullText = this._pullIndicator.querySelector('.pull-refresh-text');
+      this._pullIcon = this._pullIndicator.querySelector('.pull-refresh-icon');
     }
 
     // Floating touch controls toolbar buttons
@@ -135,15 +148,18 @@ export class ControlsManager {
    */
   _onTouchStart(e) {
     if (store.getState().isCountingDown) {
-      scroller.cancelCountdown();
-      return;
+      this._countdownCancelPending = true;
+    } else {
+      this._countdownCancelPending = false;
     }
+
     if (e.target.closest('#drawer') || e.target.closest('#welcomeModal') || e.target.closest('#touchControls') || e.target.closest('button')) {
       return;
     }
     this._touchStartY = e.touches[0].clientY;
     this._touchStartScrollY = scroller.getScrollY();
     this._touchMoved = false;
+    this._pullReady = false;
   }
 
   _onTouchMove(e) {
@@ -151,16 +167,82 @@ export class ControlsManager {
       return;
     }
     const currentY = e.touches[0].clientY;
-    const deltaY = this._touchStartY - currentY;
+    const deltaY = this._touchStartY - currentY; // positive = dragging up (scrolling down), negative = dragging down (pulling down)
+
+    // Pull-to-refresh: user is at the top of the teleprompter and dragging DOWN
+    if (this._touchStartScrollY <= 0 && deltaY < 0) {
+      const pull = Math.min(100, Math.abs(deltaY) * 0.65);
+
+      if (pull > 8) {
+        if (e.cancelable) e.preventDefault();
+        this._touchMoved = true;
+
+        if (this._pullIndicator) {
+          this._pullIndicator.classList.add('visible');
+          this._pullIndicator.style.transform = `translateY(${pull}px)`;
+
+          if (pull >= 55) {
+            this._pullReady = true;
+            if (this._pullText) this._pullText.textContent = 'Release to refresh';
+            if (this._pullIcon) this._pullIcon.textContent = '🔄';
+          } else {
+            this._pullReady = false;
+            if (this._pullText) this._pullText.textContent = 'Pull down to refresh';
+            if (this._pullIcon) this._pullIcon.textContent = '↓';
+          }
+        }
+      }
+      return;
+    }
+
+    // Normal teleprompter drag scrolling
     if (Math.abs(deltaY) > 6) {
-      e.preventDefault();
+      if (e.cancelable) e.preventDefault();
       this._touchMoved = true;
       scroller.setScrollY(this._touchStartScrollY + deltaY);
     }
   }
 
-  _onTouchEnd() {
+  _onTouchEnd(e) {
+    // If pull-to-refresh was triggered past threshold
+    if (this._pullReady) {
+      this._pullReady = false;
+      if (this._pullText) this._pullText.textContent = 'Refreshing...';
+      if (this._pullIcon) {
+        this._pullIcon.textContent = '🔄';
+        this._pullIcon.classList.add('spin');
+      }
+      if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        navigator.vibrate(25);
+      }
+      setTimeout(() => {
+        window.location.reload();
+      }, 200);
+      return;
+    }
+
+    // Reset pull indicator if not triggered
+    if (this._pullIndicator) {
+      this._pullIndicator.style.transform = '';
+      this._pullIndicator.classList.remove('visible');
+      if (this._pullIcon) {
+        this._pullIcon.textContent = '↓';
+        this._pullIcon.classList.remove('spin');
+      }
+      if (this._pullText) {
+        this._pullText.textContent = 'Pull down to refresh';
+      }
+    }
+
+    // If countdown was active, cancel it on touch release and prevent synthetic ghost clicks
+    if (this._countdownCancelPending || store.getState().isCountingDown) {
+      this._countdownCancelPending = false;
+      if (e.cancelable) e.preventDefault();
+      scroller.cancelCountdown();
+    }
+
     this._touchStartY = null;
+    this._pullReady = false;
   }
 
   /**
@@ -289,8 +371,8 @@ export class ControlsManager {
       scroller.cancelCountdown();
       return;
     }
-    // Debounce ghost clicks within 400ms of countdown cancellation
-    if (Date.now() - scroller.getLastCountdownCancelTime() < 400) {
+    // Debounce ghost clicks within 800ms of countdown cancellation
+    if (Date.now() - scroller.getLastCountdownCancelTime() < 800) {
       return;
     }
     // Do not trigger if clicking on interactive widgets, modal, touch controls, or drawer

@@ -160,12 +160,43 @@ document.addEventListener('DOMContentLoaded', () => {
     applyState(state, changedKeys);
   });
 
-  // PWA Service Worker Registration
+  // PWA Service Worker Registration & Live Auto-Update
   if ('serviceWorker' in navigator) {
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (refreshing) return;
+      refreshing = true;
+      console.log('[PWA] New service worker version active, reloading...');
+      window.location.reload();
+    });
+
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('./sw.js')
-        .then((reg) => console.log('[PWA] Service Worker registered with scope:', reg.scope))
+        .then((reg) => {
+          console.log('[PWA] Service Worker registered with scope:', reg.scope);
+          // Check for newer versions on server
+          reg.update().catch(() => {});
+        })
         .catch((err) => console.warn('[PWA] Service Worker registration failed:', err));
+    });
+  }
+
+  // Reload / Check Updates button in drawer
+  const btnRefreshApp = document.getElementById('btnRefreshApp');
+  if (btnRefreshApp) {
+    btnRefreshApp.addEventListener('click', async () => {
+      btnRefreshApp.textContent = '🔄 Updating...';
+      if ('serviceWorker' in navigator) {
+        try {
+          const registrations = await navigator.serviceWorker.getRegistrations();
+          for (const reg of registrations) {
+            await reg.update();
+          }
+        } catch (err) {
+          console.warn('[PWA] Update check failed:', err);
+        }
+      }
+      window.location.reload();
     });
   }
 

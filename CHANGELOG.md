@@ -9,10 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.0.0-rc.5] - 2026-09-20
 
+### Added
+- **Mobile Pull-to-Refresh Gesture & Visual Banner:** Swiping downwards when at the top of the teleprompter now triggers a dedicated Pull-to-Refresh banner (`↓ Pull down to refresh` &rarr; `🔄 Release to refresh`) rather than erroneously capturing the gesture as upward prompter scrolling. Releasing past threshold automatically refreshes the application.
+- **In-App Reload & Check for Updates Button:** Added a `🔄 Reload App • Check Updates` button in the Settings drawer footer that queries the Service Worker for newly deployed builds and immediately reloads the assets.
+- **Automatic Live PWA Version Updates:** Added a `controllerchange` lifecycle listener to reload the active page automatically when a newly activated Service Worker takes control.
+
 ### Fixed
-- **Countdown Overlay Click/Tap to Cancel:** Fixed a critical bug where an active countdown overlay intercepted all pointer events across the entire viewport (`z-index: 200`) without an event listener, completely preventing users from clicking or tapping anywhere on the screen to stop the countdown.
-- **Universal Cancellation Handlers:** Clicking or tapping anywhere on the screen, pressing <kbd>Space</kbd>, or pressing <kbd>Escape</kbd> now immediately cancels the countdown and returns to the ready state.
-- **Touch Gesture Debouncing:** Added a 400ms dismissal protection window to eliminate "ghost-clicks" on touchscreens where cancelling the countdown could inadvertently re-trigger prompter playback.
+- **Countdown Overlay Click/Tap to Cancel on Mobile:** Resolved a race condition where cancelling the countdown on mobile touch could leak synthetic click events and inadvertently restart the countdown. Cancellation is now handled smoothly on touch release with `preventDefault()` and an 800ms debounce protection window.
+- **Downward Swipe at Top No Longer Scrolls:** Prevented downward touch drags from being intercepted as teleprompter scrolling when the script is already at `scrollY = 0`.
+- **Universal Cancellation Handlers:** Clicking or tapping anywhere on the screen, pressing <kbd>Space</kbd>, or pressing <kbd>Escape</kbd> immediately cancels the countdown and returns to the ready state.
 - **Contextual UI Indicators:** Updated the floating touch control bar (`⏹`) and Settings drawer button (`⏹ Cancel`) to dynamically display stop/cancel states during an active countdown.
 
 ---

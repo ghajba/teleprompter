@@ -24,6 +24,14 @@
   <!-- Reading Progress Bar -->
   <div id="readingProgressBar" class="reading-progress-bar"></div>
 
+  <!-- Pull to Refresh Banner for Touchscreens -->
+  <div id="pullToRefresh" class="pull-refresh-indicator" aria-hidden="true">
+    <div class="pull-refresh-content">
+      <span class="pull-refresh-icon">↓</span>
+      <span class="pull-refresh-text">Pull down to refresh</span>
+    </div>
+  </div>
+
   <!-- Countdown Overlay -->
   <div id="countdownOverlay" class="countdown-overlay" aria-live="assertive">
     <div class="countdown-box">
@@ -387,6 +395,10 @@
 
         <button type="button" id="btnOpenWelcomeGuide" class="btn-ctrl" style="margin-top: 0.85rem; width: 100%; border-color: rgba(255, 255, 255, 0.15); font-weight: 500;">
           📖 View Welcome &amp; Benefits Guide
+        </button>
+
+        <button type="button" id="btnRefreshApp" class="btn-ctrl" style="margin-top: 0.5rem; width: 100%; border-color: rgba(56, 189, 248, 0.3); color: var(--accent); font-weight: 500;">
+          🔄 Reload App &bull; Check Updates
         </button>
       </section>
     </div>
