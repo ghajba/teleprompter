@@ -35,7 +35,8 @@ To enter your presentation speech, open ⚙️ **Settings & Script** anytime!`;
 
 export const DEFAULT_STATE = Object.freeze({
   text: WELCOME_DEMO_SCRIPT,
-  speed: 35, // pixels per second
+  wpm: 130, // Words per minute (human speech pace: 60 - 250)
+  speed: 35, // pixels per second (internally computed from wpm & layout)
   isPlaying: false,
   isMirrored: false,
   fontSize: 48, // in pixels

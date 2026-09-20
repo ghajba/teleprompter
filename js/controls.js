@@ -81,6 +81,10 @@ export class ControlsManager {
     if (this._btnTouchPlayPause) {
       this._btnTouchPlayPause.addEventListener('click', (e) => {
         e.stopPropagation();
+        if (store.getState().isCountingDown) {
+          scroller.cancelCountdown();
+          return;
+        }
         scroller.toggle();
       });
     }
@@ -147,15 +151,17 @@ export class ControlsManager {
    * @private
    */
   _onTouchStart(e) {
+    if (e.target.closest('#drawer') || e.target.closest('#welcomeModal') || e.target.closest('#touchControls') || e.target.closest('button')) {
+      this._countdownCancelPending = false;
+      return;
+    }
+
     if (store.getState().isCountingDown) {
       this._countdownCancelPending = true;
     } else {
       this._countdownCancelPending = false;
     }
 
-    if (e.target.closest('#drawer') || e.target.closest('#welcomeModal') || e.target.closest('#touchControls') || e.target.closest('button')) {
-      return;
-    }
     this._touchStartY = e.touches[0].clientY;
     this._touchStartScrollY = scroller.getScrollY();
     this._touchMoved = false;
@@ -174,7 +180,7 @@ export class ControlsManager {
       const pull = Math.min(100, Math.abs(deltaY) * 0.65);
 
       if (pull > 8) {
-        if (e.cancelable) e.preventDefault();
+        // Do NOT call e.preventDefault() so native browser pull-to-refresh can also trigger
         this._touchMoved = true;
 
         if (this._pullIndicator) {
@@ -331,13 +337,16 @@ export class ControlsManager {
   }
 
   /**
-   * Increments or decrements speed by a delta step.
-   * @param {number} delta 
+   * Increments or decrements speech speed in WPM.
+   * @param {number} deltaWpm 
    */
-  _adjustSpeed(delta) {
-    const currentSpeed = store.getState().speed;
-    const newSpeed = Math.min(Math.max(5, currentSpeed + delta), 150);
-    store.setState({ speed: newSpeed });
+  _adjustSpeed(deltaWpm) {
+    const currentWpm = store.getState().wpm || 130;
+    const newWpm = Math.min(Math.max(60, currentWpm + deltaWpm), 250);
+    store.setState({
+      wpm: newWpm,
+      speed: scroller.calculateSpeedFromWpm(newWpm)
+    });
   }
 
   /**

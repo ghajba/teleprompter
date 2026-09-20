@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
       hudTime.textContent = metrics.remainingFormatted;
     }
     if (hudWpm) {
-      hudWpm.textContent = `${metrics.wpm} wpm`;
+      hudWpm.textContent = metrics.pace || 'Conversational';
     }
   }, 250);
 
@@ -126,7 +126,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // HUD & On-screen controls status updates
-    if (changedKeys.includes('isPlaying') || changedKeys.includes('speed') || changedKeys.includes('reverseScroll')) {
+    if (changedKeys.includes('isPlaying') || changedKeys.includes('wpm') || changedKeys.includes('speed') || changedKeys.includes('reverseScroll')) {
       if (hudDot) {
         hudDot.classList.toggle('playing', state.isPlaying);
       }
@@ -140,7 +140,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
       if (hudSpeed) {
-        hudSpeed.textContent = `${state.reverseScroll ? '-' : ''}${state.speed} px/s`;
+        const wpm = state.wpm || 130;
+        hudSpeed.textContent = `${state.reverseScroll ? '⏪ -' : ''}${wpm} WPM`;
       }
       if (hud) {
         hud.classList.toggle('autohide', state.isPlaying);

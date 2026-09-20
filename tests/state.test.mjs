@@ -49,6 +49,7 @@ console.log('✓ Storage helper operations passed');
 // Test 2: Initial state
 const initialState = store.getState();
 assert.equal(initialState.speed, DEFAULT_STATE.speed);
+assert.equal(initialState.wpm, 130);
 assert.equal(initialState.isPlaying, false);
 assert.equal(initialState.countdownDuration, 3);
 assert.equal(initialState.countdownShowScript, true);

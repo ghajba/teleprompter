@@ -142,9 +142,9 @@
   <aside id="hud" class="prompter-hud" aria-live="polite">
     <span id="hudDot" class="hud-status-dot"></span>
     <span id="hudStatus">Paused</span>
-    <span id="hudSpeed" class="hud-speed-badge">35 px/s</span>
+    <span id="hudSpeed" class="hud-speed-badge">130 WPM</span>
     <span class="hud-metric-pill" title="Estimated time remaining">⏱ <strong id="hudTime">00:00</strong></span>
-    <span class="hud-metric-pill" title="Estimated reading speed">📖 <strong id="hudWpm">130 wpm</strong></span>
+    <span class="hud-metric-pill" title="Speaking pace">🗣️ <strong id="hudWpm">Conversational</strong></span>
   </aside>
 
   <!-- Floating Settings & Script Drawer Toggle -->
@@ -177,7 +177,10 @@
   <aside id="drawer" class="drawer" aria-label="Prompter configuration drawer">
     <header class="drawer-header">
       <h2 class="drawer-title">⚙️ Prompter Controls</h2>
-      <button id="drawerClose" class="drawer-close-btn" aria-label="Close drawer">&times;</button>
+      <div class="drawer-header-actions">
+        <button id="btnHeaderRefresh" class="drawer-header-refresh-btn" type="button" title="Reload app / check for updates">🔄 Refresh</button>
+        <button id="drawerClose" class="drawer-close-btn" aria-label="Close drawer">&times;</button>
+      </div>
     </header>
 
     <div class="drawer-body">
@@ -224,7 +227,10 @@
           <button id="btnRewind" class="btn-ctrl">⏪ Rewind Step</button>
           <button id="btnFullscreen" class="btn-ctrl">⛶ Fullscreen (F)</button>
         </div>
-        <button id="btnRestoreDemo" class="btn-ctrl" style="margin-top: 0.4rem; border-color: rgba(56, 189, 248, 0.3); color: var(--accent);">📝 Restore Demo Script</button>
+        <div class="btn-grid" style="margin-top: 0.4rem;">
+          <button id="btnRestoreDemo" class="btn-ctrl" style="border-color: rgba(56, 189, 248, 0.3); color: var(--accent);">📝 Restore Demo</button>
+          <button id="btnDrawerRefresh" class="btn-ctrl" style="border-color: rgba(56, 189, 248, 0.3); color: var(--accent);">🔄 Reload App</button>
+        </div>
         
         <!-- Reverse scroll toggle -->
         <div class="control-row" style="margin-top: 0.6rem;">
@@ -243,10 +249,15 @@
       <!-- Section 3: Speed & Timing -->
       <section class="drawer-section">
         <div class="control-header">
-          <label for="speedSlider" class="section-label">Scroll Speed</label>
-          <span id="speedValue" class="control-value">35 px/s</span>
+          <label for="speedSlider" class="section-label">Reading Speed (WPM)</label>
+          <span id="speedValue" class="control-value">130 WPM &bull; Conversational</span>
         </div>
-        <input type="range" id="speedSlider" min="5" max="150" step="1" value="35">
+        <input type="range" id="speedSlider" min="60" max="250" step="5" value="130">
+        <div class="speed-hint-row">
+          <span class="speed-hint-label">60 WPM (Slow)</span>
+          <span id="speedTotalTime" class="speed-hint-center">~3 min total</span>
+          <span class="speed-hint-label">250 WPM (Fast)</span>
+        </div>
 
         <!-- Countdown selector -->
         <div class="control-row" style="margin-top: 0.75rem;">

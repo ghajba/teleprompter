@@ -7,6 +7,15 @@
 import { store } from './state.js';
 import { stripMarkdown } from './markdown.js';
 
+export function getPaceDescription(wpm) {
+  if (wpm < 100) return 'Very Slow';
+  if (wpm < 125) return 'Slow & Clear';
+  if (wpm < 155) return 'Conversational';
+  if (wpm < 185) return 'Brisk & Energetic';
+  if (wpm < 220) return 'Fast Pace';
+  return 'Rapid Fire';
+}
+
 class ScrollerEngine {
   constructor() {
     this._scrollY = 0;
@@ -32,9 +41,19 @@ class ScrollerEngine {
           this._stopLoop();
         }
       }
+      if (changedKeys.includes('wpm')) {
+        const newSpeed = this.calculateSpeedFromWpm(state.wpm);
+        store.setState({ speed: newSpeed });
+      }
       if (changedKeys.includes('text') || changedKeys.includes('fontSize') || changedKeys.includes('marginWidth')) {
         // Defer scroll boundary calculation slightly to let DOM layout settle
-        setTimeout(() => this._updateMaxScroll(), 20);
+        setTimeout(() => {
+          this._updateMaxScroll();
+          if (store.getState().wpm) {
+            const newSpeed = this.calculateSpeedFromWpm(store.getState().wpm);
+            store.setState({ speed: newSpeed });
+          }
+        }, 20);
       }
     });
   }
@@ -199,8 +218,30 @@ class ScrollerEngine {
   }
 
   /**
+   * Translates spoken WPM (words per minute) to hardware px/sec scroll rate
+   * based on rendered text height and script word count.
+   * @param {number} targetWpm
+   * @returns {number} pixels per second
+   */
+  calculateSpeedFromWpm(targetWpm) {
+    const text = store.getState().text || '';
+    const cleanText = stripMarkdown(text);
+    const words = cleanText ? cleanText.split(/\s+/).length : 0;
+    const fontSize = store.getState().fontSize || 48;
+
+    if (this._maxScrollY > 100 && words >= 5) {
+      const calculatedSpeed = Math.round((targetWpm * this._maxScrollY) / (words * 60));
+      return Math.min(Math.max(calculatedSpeed, 8), 180);
+    }
+
+    const pixelsPerWord = Math.max(8, fontSize * 0.28);
+    const speed = Math.round((targetWpm / 60) * pixelsPerWord * 3.5);
+    return Math.min(Math.max(speed, 10), 160);
+  }
+
+  /**
    * Calculates real-time reading metrics: WPM, elapsed time, and remaining time.
-   * @returns {{ words: number, wpm: number, remainingFormatted: string, elapsedFormatted: string, progress: number }}
+   * @returns {{ words: number, wpm: number, pace: string, remainingFormatted: string, elapsedFormatted: string, totalFormatted: string, progress: number }}
    */
   getMetrics() {
     const text = store.getState().text || '';
@@ -215,18 +256,21 @@ class ScrollerEngine {
     const remainingSeconds = speed > 0 ? Math.round(remainingScroll / speed) : 0;
     const elapsedSeconds = speed > 0 ? Math.round(this._scrollY / speed) : 0;
 
-    // Approximate WPM based on total script words and estimated total duration
+    // Total estimated duration
     const totalEstimatedSeconds = speed > 0 ? Math.round(this._maxScrollY / speed) : 0;
     const estimatedMinutes = totalEstimatedSeconds / 60;
     const rawWpm = (estimatedMinutes > 0 && words > 0) ? Math.round(words / estimatedMinutes) : 130;
+    const targetWpm = store.getState().wpm || Math.min(Math.max(rawWpm, 50), 300);
 
     return {
       words,
-      wpm: Math.min(Math.max(rawWpm, 50), 300),
+      wpm: targetWpm,
+      pace: getPaceDescription(targetWpm),
       remainingSeconds,
       elapsedSeconds,
       remainingFormatted: this._formatTime(remainingSeconds),
       elapsedFormatted: this._formatTime(elapsedSeconds),
+      totalFormatted: this._formatTime(totalEstimatedSeconds),
       progress: Math.round(progress)
     };
   }
@@ -278,6 +322,11 @@ class ScrollerEngine {
       return;
     }
 
+    // Protect against ghost clicks immediately after cancelling countdown
+    if (Date.now() - this._lastCountdownCancelTime < 800) {
+      return;
+    }
+
     if (isPlaying) {
       this.pause();
     } else {
@@ -290,6 +339,11 @@ class ScrollerEngine {
    * If already at or past the end of the text, automatically restarts from top.
    */
   play() {
+    // Protect against ghost clicks immediately after cancelling countdown
+    if (Date.now() - this._lastCountdownCancelTime < 800) {
+      return;
+    }
+
     const { countdownDuration } = store.getState();
 
     // If script reached the end, automatically rewind to start

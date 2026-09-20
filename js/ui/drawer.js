@@ -4,7 +4,7 @@
  */
 
 import { store, WELCOME_DEMO_SCRIPT } from '../state.js';
-import { scroller } from '../scroller.js';
+import { scroller, getPaceDescription } from '../scroller.js';
 import { stripMarkdown } from '../markdown.js';
 
 export class DrawerController {
@@ -12,6 +12,8 @@ export class DrawerController {
     this._drawerEl = document.getElementById('drawer');
     this._toggleBtn = document.getElementById('drawerToggle');
     this._closeBtn = document.getElementById('drawerClose');
+    this._btnHeaderRefresh = document.getElementById('btnHeaderRefresh');
+    this._btnDrawerRefresh = document.getElementById('btnDrawerRefresh');
 
     // Form inputs
     this._scriptInput = document.getElementById('scriptInput');
@@ -26,6 +28,7 @@ export class DrawerController {
 
     this._speedSlider = document.getElementById('speedSlider');
     this._speedValue = document.getElementById('speedValue');
+    this._speedTotalTime = document.getElementById('speedTotalTime');
 
     this._fontSizeSlider = document.getElementById('fontSizeSlider');
     this._fontSizeValue = document.getElementById('fontSizeValue');
@@ -74,6 +77,29 @@ export class DrawerController {
     }
     if (this._closeBtn) {
       this._closeBtn.addEventListener('click', () => this.close());
+    }
+
+    const handleAppRefresh = async () => {
+      if (this._btnHeaderRefresh) this._btnHeaderRefresh.textContent = '🔄 Updating...';
+      if (this._btnDrawerRefresh) this._btnDrawerRefresh.textContent = '🔄 Updating...';
+      if ('serviceWorker' in navigator) {
+        try {
+          const registrations = await navigator.serviceWorker.getRegistrations();
+          for (const reg of registrations) {
+            await reg.update();
+          }
+        } catch (err) {
+          console.warn('[PWA] Refresh check failed:', err);
+        }
+      }
+      window.location.reload();
+    };
+
+    if (this._btnHeaderRefresh) {
+      this._btnHeaderRefresh.addEventListener('click', handleAppRefresh);
+    }
+    if (this._btnDrawerRefresh) {
+      this._btnDrawerRefresh.addEventListener('click', handleAppRefresh);
     }
 
     // Guide tabs
@@ -164,11 +190,12 @@ export class DrawerController {
       });
     }
 
-    // Speed slider
+    // Speed slider (Words Per Minute)
     if (this._speedSlider) {
       this._speedSlider.addEventListener('input', (e) => {
-        const speed = parseInt(e.target.value, 10);
-        store.setState({ speed });
+        const wpm = parseInt(e.target.value, 10);
+        const speed = scroller.calculateSpeedFromWpm(wpm);
+        store.setState({ wpm, speed });
       });
     }
 
@@ -213,6 +240,10 @@ export class DrawerController {
     // Play/pause button in drawer
     if (this._btnPlayPause) {
       this._btnPlayPause.addEventListener('click', () => {
+        if (store.getState().isCountingDown) {
+          scroller.cancelCountdown();
+          return;
+        }
         scroller.toggle();
       });
     }
@@ -334,9 +365,15 @@ export class DrawerController {
       this._updateTextStats(state.text);
     }
 
-    if (changedKeys.includes('speed')) {
-      if (this._speedSlider) this._speedSlider.value = state.speed;
-      if (this._speedValue) this._speedValue.textContent = `${state.speed} px/s`;
+    if ((changedKeys.includes('wpm') || changedKeys.includes('speed') || changedKeys.includes('text')) && this._speedSlider) {
+      const wpm = state.wpm || 130;
+      const pace = getPaceDescription(wpm);
+      this._speedSlider.value = wpm;
+      if (this._speedValue) this._speedValue.textContent = `${wpm} WPM • ${pace}`;
+      if (this._speedTotalTime) {
+        const metrics = scroller.getMetrics();
+        this._speedTotalTime.textContent = `~${metrics.totalFormatted || '3:00'} total`;
+      }
     }
 
     if (changedKeys.includes('fontSize')) {
