@@ -145,6 +145,7 @@
     <span id="hudSpeed" class="hud-speed-badge">130 WPM</span>
     <span class="hud-metric-pill" title="Estimated time remaining">⏱ <strong id="hudTime">00:00</strong></span>
     <span class="hud-metric-pill" title="Speaking pace">🗣️ <strong id="hudWpm">Conversational</strong></span>
+    <span id="hudVoice" class="hud-metric-pill hidden" title="Voice Follow status">🎙️ <strong id="hudVoiceStatus">Voice</strong></span>
     <span class="hud-version-pill app-version-text" title="Installed App Version">v1.0.0</span>
   </aside>
 
@@ -300,6 +301,31 @@
             </div>
           </label>
         </div>
+
+        <!-- Voice follow toggle -->
+        <div class="control-row" style="margin-top: 0.6rem;">
+          <label class="toggle-switch-label">
+            <span>🎙️ Voice Follow (Auto-Scroll)</span>
+            <div class="switch">
+              <input type="checkbox" id="voiceFollowToggle">
+              <span class="slider-round"></span>
+            </div>
+          </label>
+        </div>
+
+        <!-- Voice language selector -->
+        <div id="voiceLanguageRow" class="control-row" style="margin-top: 0.5rem; display: none;">
+          <label for="voiceLanguageSelect" style="font-size: 0.85rem; margin-bottom: 0.25rem;">Voice Language</label>
+          <select id="voiceLanguageSelect" class="select-input">
+            <option value="auto">Auto Detect (Browser Default)</option>
+            <option value="hu-HU">Magyar (Hungarian)</option>
+            <option value="en-US">English (US)</option>
+            <option value="en-GB">English (UK)</option>
+            <option value="de-DE">Deutsch (German)</option>
+            <option value="es-ES">Español (Spanish)</option>
+            <option value="fr-FR">Français (French)</option>
+          </select>
+        </div>
       </section>
 
       <!-- Section 4: Typography & Layout -->
@@ -383,6 +409,25 @@
             <button type="button" class="theme-pill theme-light" data-bg="#ffffff" data-text="#000000">Light</button>
           </div>
         </div>
+
+        <!-- Reading Highlight Mode -->
+        <div class="control-row" style="margin-top: 0.75rem;">
+          <label for="readingHighlightSelect" style="font-size: 0.85rem; margin-bottom: 0.25rem;">Reading Highlight Focus</label>
+          <select id="readingHighlightSelect" class="select-input">
+            <option value="none">None (Standard)</option>
+            <option value="dim">Dim Inactive Lines</option>
+            <option value="accent">Accent Bar &amp; Glow</option>
+          </select>
+        </div>
+      </section>
+
+      <!-- Section: Wireless Remote Control -->
+      <section class="drawer-section">
+        <span class="section-label">📱 Wireless Remote Control</span>
+        <div class="btn-grid">
+          <button type="button" id="btnOpenRemoteWindow" class="btn-ctrl" style="border-color: var(--accent); color: var(--accent);">🪟 Open Remote</button>
+          <button type="button" id="btnShowRemoteQR" class="btn-ctrl" style="border-color: rgba(255, 255, 255, 0.2);">📲 Pair Phone (QR)</button>
+        </div>
       </section>
 
       <!-- Section 5: Controls & Shortcuts Guide -->
@@ -431,6 +476,32 @@
       <a href="https://github.com/ghajba/teleprompter" target="_blank" rel="noopener noreferrer">GitHub &rarr;</a>
     </footer>
   </aside>
+
+  <!-- Remote Pairing Modal -->
+  <div id="remoteModal" class="welcome-modal-backdrop hidden" aria-hidden="true">
+    <div class="welcome-modal-card" style="max-width: 440px;">
+      <button type="button" id="btnCloseRemoteModal" class="welcome-modal-close" aria-label="Close remote pairing">&times;</button>
+      <div class="welcome-modal-header" style="text-align: center;">
+        <h3 style="margin: 0; font-size: 1.35rem; font-weight: 700;">📱 Mobile Remote Control</h3>
+        <p style="margin: 0.35rem 0 0 0; font-size: 0.88rem; color: var(--drawer-muted);">
+          Scan this QR code with your smartphone camera to open the wireless pocket controller.
+        </p>
+      </div>
+      <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.25rem 0;">
+        <div id="remoteQrCode" style="background: #ffffff; padding: 0.85rem; border-radius: 0.75rem; box-shadow: 0 0 24px rgba(0, 0, 0, 0.6); display: flex; align-items: center; justify-content: center; min-width: 200px; min-height: 200px;"></div>
+        <div style="margin-top: 1rem; display: flex; gap: 0.5rem; width: 100%; max-width: 320px;">
+          <input type="text" id="remotePairingUrl" readonly class="select-input" style="font-size: 0.8rem; text-overflow: ellipsis;">
+          <button type="button" id="btnCopyRemoteUrl" class="btn-mini" style="white-space: nowrap; padding: 0.4rem 0.8rem;">📋 Copy</button>
+        </div>
+        <span id="remoteCopyFeedback" style="font-size: 0.78rem; color: var(--accent); margin-top: 0.35rem; display: none;">Copied to clipboard!</span>
+      </div>
+      <div class="modal-actions" style="margin-top: 0.5rem; justify-content: center;">
+        <button type="button" id="btnLaunchRemoteTab" class="btn-ctrl" style="border-color: var(--accent); color: var(--accent);">
+          🔗 Open Remote in New Tab
+        </button>
+      </div>
+    </div>
+  </div>
 
   <!-- Application Bootstrap -->
   <script type="module" src="js/app.js"></script>

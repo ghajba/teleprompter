@@ -15,19 +15,20 @@ const ROOT_DIR = path.resolve(import.meta.dirname, '..');
 
 console.log('🧪 Starting DOM Contract tests (JS queries vs index.html elements)...');
 
-// 1. Parse all IDs from index.html
-const htmlPath = path.join(ROOT_DIR, 'index.html');
-const htmlContent = fs.readFileSync(htmlPath, 'utf8');
-
-const idRegex = /\bid=["']([^"']+)["']/g;
+// 1. Parse all IDs from all HTML files in project root
+const htmlFiles = fs.readdirSync(ROOT_DIR).filter((f) => f.endsWith('.html'));
 const htmlIds = new Set();
-let match;
-while ((match = idRegex.exec(htmlContent)) !== null) {
-  htmlIds.add(match[1]);
+for (const file of htmlFiles) {
+  const content = fs.readFileSync(path.join(ROOT_DIR, file), 'utf8');
+  const idRegex = /\bid=["']([^"']+)["']/g;
+  let match;
+  while ((match = idRegex.exec(content)) !== null) {
+    htmlIds.add(match[1]);
+  }
 }
 
-assert.ok(htmlIds.size > 10, `Found ${htmlIds.size} element IDs in index.html`);
-console.log(`✓ Parsed ${htmlIds.size} unique element IDs from index.html`);
+assert.ok(htmlIds.size > 10, `Found ${htmlIds.size} element IDs across HTML files`);
+console.log(`✓ Parsed ${htmlIds.size} unique element IDs across ${htmlFiles.length} HTML files`);
 
 // 2. Scan all JS files in js/ for document.getElementById
 const jsDir = path.join(ROOT_DIR, 'js');

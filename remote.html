@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#090d16">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="description" content="Wireless touch remote controller for Teleprompter">
+  <title>Teleprompter Pocket Remote</title>
+  <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="css/remote.css">
+</head>
+<body>
+  <div class="remote-container">
+    <!-- Header with status and version -->
+    <header class="remote-header">
+      <div class="remote-status-badge">
+        <span id="remoteStatusDot" class="remote-status-dot"></span>
+        <span id="remoteStatusText">Connecting...</span>
+      </div>
+      <span class="remote-version-tag app-version-text">v1.0.0</span>
+    </header>
+
+    <!-- Reading Progress & Time Card -->
+    <section class="remote-card">
+      <div class="remote-progress-header">
+        <span>Reading Progress</span>
+        <strong id="remoteProgressPercent">0%</strong>
+      </div>
+      <div class="remote-progress-bar-wrap">
+        <div id="remoteProgressFill" class="remote-progress-bar-fill"></div>
+      </div>
+      <div class="remote-time-row">
+        <span>Remaining: <strong id="remoteTimeRemaining">00:00</strong></span>
+        <span>Total: <strong id="remoteTimeTotal">00:00</strong></span>
+      </div>
+    </section>
+
+    <!-- Speed Adjustment Section -->
+    <section class="remote-card remote-speed-section">
+      <button type="button" id="btnRemoteSpeedMinus" class="btn-speed-step" aria-label="Decrease speed by 5 WPM">
+        ➖ 5
+      </button>
+      <div class="remote-speed-center">
+        <div id="remoteSpeedValue" class="remote-speed-value">130 WPM</div>
+        <div id="remotePaceValue" class="remote-pace-value">Conversational</div>
+      </div>
+      <button type="button" id="btnRemoteSpeedPlus" class="btn-speed-step" aria-label="Increase speed by 5 WPM">
+        ➕ 5
+      </button>
+    </section>
+
+    <!-- Primary Tactile Play/Pause Button -->
+    <div class="remote-primary-action">
+      <button type="button" id="btnRemoteToggle" class="btn-remote-toggle" aria-label="Play or pause teleprompter">
+        <span id="btnRemoteToggleIcon" class="btn-remote-toggle-icon">▶</span>
+        <span id="btnRemoteToggleLabel" class="btn-remote-toggle-label">Play</span>
+      </button>
+    </div>
+
+    <!-- Secondary Direction & Navigation Controls -->
+    <nav class="remote-nav-grid" aria-label="Secondary controls">
+      <button type="button" id="btnRemoteRewind" class="btn-nav-action" aria-label="Rewind reading step">
+        <span class="btn-nav-icon">⏪</span>
+        <span>Step Back</span>
+      </button>
+      <button type="button" id="btnRemoteReset" class="btn-nav-action" aria-label="Reset prompter to beginning">
+        <span class="btn-nav-icon">↺</span>
+        <span>Reset Top</span>
+      </button>
+      <button type="button" id="btnRemoteReverse" class="btn-nav-action" aria-label="Toggle reverse scroll direction">
+        <span class="btn-nav-icon">🔄</span>
+        <span>Reverse</span>
+      </button>
+    </nav>
+
+    <!-- Footer info -->
+    <footer class="remote-footer">
+      <span>Teleprompter Wireless Controller &bull; Local &amp; Private</span>
+    </footer>
+  </div>
+
+  <script type="module" src="js/remote-client.js"></script>
+</body>
+</html>

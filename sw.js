@@ -8,11 +8,13 @@ const CACHE_NAME = 'teleprompter-v1.0.0';
 const PRECACHE_ASSETS = [
   './',
   './index.html',
+  './remote.html',
   './manifest.webmanifest',
   './icons/icon.svg',
   './css/main.css',
   './css/prompter.css',
   './css/sidebar.css',
+  './css/remote.css',
   './js/app.js',
   './js/version.js',
   './js/state.js',
@@ -21,7 +23,12 @@ const PRECACHE_ASSETS = [
   './js/controls.js',
   './js/ui/drawer.js',
   './js/ui/welcome.js',
-  './js/markdown.js'
+  './js/markdown.js',
+  './js/highlight.js',
+  './js/speech.js',
+  './js/qrcode.js',
+  './js/remote.js',
+  './js/remote-client.js'
 ];
 
 // Install Event: Pre-cache the entire application shell

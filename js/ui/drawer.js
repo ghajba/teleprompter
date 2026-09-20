@@ -56,6 +56,12 @@ export class DrawerController {
     this._touchControlsToggle = document.getElementById('touchControlsToggle');
     this._reverseToggle = document.getElementById('reverseToggle');
 
+    // Reading Highlight & Voice Follow
+    this._readingHighlightSelect = document.getElementById('readingHighlightSelect');
+    this._voiceFollowToggle = document.getElementById('voiceFollowToggle');
+    this._voiceLanguageSelect = document.getElementById('voiceLanguageSelect');
+    this._voiceLanguageRow = document.getElementById('voiceLanguageRow');
+
     // Guide & Help elements
     this._btnOpenWelcomeGuide = document.getElementById('btnOpenWelcomeGuide');
     this._drawerTabTouch = document.getElementById('drawerTabTouch');
@@ -333,6 +339,27 @@ export class DrawerController {
         store.setState({ bgColor: bg, textColor: text });
       });
     });
+
+    // Reading highlight mode select
+    if (this._readingHighlightSelect) {
+      this._readingHighlightSelect.addEventListener('change', (e) => {
+        store.setState({ readingHighlightMode: e.target.value });
+      });
+    }
+
+    // Voice follow toggle
+    if (this._voiceFollowToggle) {
+      this._voiceFollowToggle.addEventListener('change', (e) => {
+        store.setState({ voiceFollowEnabled: e.target.checked });
+      });
+    }
+
+    // Voice language select
+    if (this._voiceLanguageSelect) {
+      this._voiceLanguageSelect.addEventListener('change', (e) => {
+        store.setState({ voiceLanguage: e.target.value });
+      });
+    }
   }
 
   _syncFromStore(state, changedKeys) {
@@ -342,6 +369,23 @@ export class DrawerController {
 
     if (changedKeys.includes('renderMarkdown') && this._renderMarkdownToggle) {
       this._renderMarkdownToggle.checked = !!state.renderMarkdown;
+    }
+
+    if (changedKeys.includes('readingHighlightMode') && this._readingHighlightSelect) {
+      this._readingHighlightSelect.value = state.readingHighlightMode || 'none';
+    }
+
+    if (changedKeys.includes('voiceFollowEnabled')) {
+      if (this._voiceFollowToggle) {
+        this._voiceFollowToggle.checked = !!state.voiceFollowEnabled;
+      }
+      if (this._voiceLanguageRow) {
+        this._voiceLanguageRow.style.display = state.voiceFollowEnabled ? 'block' : 'none';
+      }
+    }
+
+    if (changedKeys.includes('voiceLanguage') && this._voiceLanguageSelect) {
+      this._voiceLanguageSelect.value = state.voiceLanguage || 'auto';
     }
 
     if (changedKeys.includes('countdownDuration') && this._countdownSelect) {

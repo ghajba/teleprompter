@@ -206,6 +206,18 @@ class ScrollerEngine {
       const percent = this.getProgressPercent();
       this._progressBarEl.style.width = `${percent}%`;
     }
+
+    if (this._onRender) {
+      this._onRender(this._scrollY);
+    }
+  }
+
+  /**
+   * Sets callback invoked on each render frame / scroll update.
+   * @param {(scrollY: number) => void} callback
+   */
+  setOnRender(callback) {
+    this._onRender = callback;
   }
 
   /**
