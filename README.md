@@ -1,6 +1,8 @@
 # Teleprompter Web App
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![CI Tests](https://github.com/ghajba/teleprompter/actions/workflows/ci.yml/badge.svg)](https://github.com/ghajba/teleprompter/actions/workflows/ci.yml)
+[![GitHub Sponsors](https://img.shields.io/badge/Sponsor-%E2%9D%A4-pink.svg)](https://github.com/sponsors/ghajba)
 [![PWA](https://img.shields.io/badge/PWA-Ready-success.svg)](manifest.webmanifest)
 [![Zero Dependencies](https://img.shields.io/badge/Dependencies-0-brightgreen.svg)](#architecture)
 [![Performance](https://img.shields.io/badge/Scrolling-60%2B%20FPS-orange.svg)](#performance)
@@ -103,6 +105,29 @@ Because there are no build steps or dependencies:
    npx serve .
    ```
 3. Open `http://localhost:8080` in Chrome, Edge, Firefox, or Safari.
+
+---
+
+## 🧪 Testing & CI
+
+Automated continuous integration is powered by **GitHub Actions** (`.github/workflows/ci.yml`). Every commit and pull request runs:
+- StateStore & Storage unit tests (Pub/Sub verification, localStorage serialization, fallback behavior)
+- JavaScript syntax and ES module import integrity verification across multiple Node.js environments.
+
+Run tests locally:
+```bash
+npm test
+```
+
+---
+
+## 💖 Support the Developer
+
+If you find this free, privacy-friendly, zero-tracking teleprompter useful for your video shoots, presentations, or live streams, consider sponsoring its ongoing open-source development:
+
+👉 **[Sponsor @ghajba on GitHub Sponsors](https://github.com/sponsors/ghajba)**
+
+Your support helps keep this tool 100% free, ad-free, and continuously improved!
 
 ---
 

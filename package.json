@@ -1,0 +1,25 @@
+{
+  "name": "teleprompter",
+  "version": "1.0.0",
+  "description": "Lightweight, zero-dependency offline-first PWA teleprompter with 60+ FPS smooth scrolling",
+  "type": "module",
+  "scripts": {
+    "test": "node tests/state.test.mjs && node --check js/scroller.js && node --check js/controls.js && node --check js/ui/drawer.js && node --check js/app.js",
+    "serve": "npx serve ."
+  },
+  "keywords": [
+    "teleprompter",
+    "prompter",
+    "video",
+    "speech",
+    "offline-first",
+    "pwa",
+    "vanilla-js"
+  ],
+  "author": "Gábor László Hajba <gabor.hajba@gmail.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ghajba/teleprompter.git"
+  }
+}
