@@ -8,6 +8,7 @@ import { scroller } from './scroller.js';
 import { ControlsManager } from './controls.js';
 import { DrawerController } from './ui/drawer.js';
 import { WelcomeModalController } from './ui/welcome.js';
+import { renderMarkdown } from './markdown.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   const prompterContainer = document.getElementById('prompterContainer');
@@ -26,7 +27,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const prompterTextInner = document.getElementById('prompterTextInner');
   if (prompterTextInner) {
-    prompterTextInner.textContent = store.getState().text || '';
+    const initialText = store.getState().text || '';
+    if (store.getState().renderMarkdown) {
+      prompterTextInner.innerHTML = renderMarkdown(initialText);
+    } else {
+      prompterTextInner.textContent = initialText;
+    }
   }
 
   // Initialize UI controllers
@@ -91,11 +97,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const prompterTextInner = document.getElementById('prompterTextInner');
-    if (changedKeys.includes('text')) {
+    if (changedKeys.includes('text') || changedKeys.includes('renderMarkdown')) {
       if (prompterTextInner) {
-        prompterTextInner.textContent = state.text;
+        if (state.renderMarkdown) {
+          prompterTextInner.innerHTML = renderMarkdown(state.text || '');
+        } else {
+          prompterTextInner.textContent = state.text || '';
+        }
       } else if (prompterText) {
-        prompterText.textContent = state.text;
+        prompterText.textContent = state.text || '';
       }
     }
 
@@ -104,7 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Trigger scroller boundary recalculation on any layout mutation
-    const layoutAffectingKeys = ['text', 'fontSize', 'marginWidth', 'fontFamily', 'eyelinePosition'];
+    const layoutAffectingKeys = ['text', 'fontSize', 'marginWidth', 'fontFamily', 'eyelinePosition', 'renderMarkdown'];
     if (changedKeys.some(k => layoutAffectingKeys.includes(k))) {
       requestAnimationFrame(() => {
         scroller.updateBounds();
@@ -181,6 +191,62 @@ document.addEventListener('DOMContentLoaded', () => {
   window.addEventListener('appinstalled', () => {
     console.log('[PWA] Application successfully installed.');
     if (installBtn) installBtn.style.display = 'none';
+  });
+
+  // File Drag & Drop support (.txt and .md files)
+  const fileDropZone = document.getElementById('fileDropZone');
+  let dragCounter = 0;
+
+  window.addEventListener('dragenter', (e) => {
+    e.preventDefault();
+    dragCounter++;
+    if (fileDropZone) fileDropZone.classList.remove('hidden');
+  });
+
+  window.addEventListener('dragleave', (e) => {
+    e.preventDefault();
+    dragCounter--;
+    if (dragCounter <= 0 && fileDropZone) {
+      dragCounter = 0;
+      fileDropZone.classList.add('hidden');
+    }
+  });
+
+  window.addEventListener('dragover', (e) => {
+    e.preventDefault();
+  });
+
+  window.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dragCounter = 0;
+    if (fileDropZone) fileDropZone.classList.add('hidden');
+
+    const files = e.dataTransfer && e.dataTransfer.files;
+    if (files && files.length > 0) {
+      const file = files[0];
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const content = event.target && event.target.result;
+        if (typeof content === 'string') {
+          store.setState({ text: content });
+        }
+      };
+      reader.readAsText(file);
+    }
+  });
+
+  // Global Paste handler: opens drawer and loads clipboard text if not typing in an input
+  window.addEventListener('paste', (e) => {
+    const active = document.activeElement;
+    if (active && (active.tagName === 'TEXTAREA' || active.tagName === 'INPUT')) {
+      return; // allow native paste inside active input
+    }
+    const text = (e.clipboardData || window.clipboardData)?.getData('text');
+    if (text) {
+      e.preventDefault();
+      store.setState({ text });
+      drawerController.open();
+    }
   });
 
   console.log('🚀 Teleprompter Web App initialized successfully.');

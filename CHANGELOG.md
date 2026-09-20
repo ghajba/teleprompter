@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.0-rc.4] - 2026-09-20
+
+### Added
+- **Native Zero-Dependency Markdown Rendering:** Prompter text is rendered with rich Markdown typography, including section headings (`#`, `##`, `###`), bold spoken emphasis (`**bold**`), italics (`*italic*`), strikethrough, and bullet/numbered lists.
+- **Stage Directions & Actor Cues:** Bracketed cues (e.g. `[Pause 2s]`, `[Look at camera 2]`) are automatically rendered as discrete visual cue badges (`🎬 Cue`), styled to indicate they are presentation directions not to be spoken aloud.
+- **Visual Scene Breaks & Pause Bars:** Three or more dashes (`---`) create a prominent `[⏸ PAUSE / BREAK]` separator bar.
+- **Markdown Formatting Guide:** Added an interactive, collapsible cheatsheet (`✨ Markdown Guide`) directly above the script textarea in the Drawer.
+- **Render Markdown Toggle:** Added a "Render Markdown Formatting" switch in Settings (*Display & Typography*) allowing users to switch between formatted and plain raw text.
+- **File Drag & Drop Import:** Users can drag and drop `.txt` and `.md` script files directly onto the teleprompter window to load scripts instantly.
+- **Global Clipboard Paste:** Pressing <kbd>Ctrl</kbd> + <kbd>V</kbd> anywhere on the prompter canvas opens the settings drawer and loads the clipboard script.
+- **Markdown-Sanitized Speech Timing:** The word counting engine strips Markdown tokens and stage directions so spoken WPM and estimated durations remain 100% accurate.
+
+### Fixed
+- **Placeholder & Instructions Wording:** Replaced ambiguous "paste here" text with clear instructions directing users to the `⚙️ Settings & Script` drawer. Updated textarea placeholder to indicate Markdown support.
+
+---
+
 ## [1.0.0-rc.3] - 2026-09-20
 
 ### Added

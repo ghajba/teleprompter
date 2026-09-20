@@ -378,3 +378,173 @@
   transform: scale(0.92);
 }
 
+/* ==========================================================================
+   Prompter Markdown Typography & Stage Directions
+   ========================================================================== */
+
+.prompter-heading {
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin: 0.85em 0 0.35em 0;
+  line-height: 1.25;
+}
+
+.prompter-h1 {
+  font-size: 1.4em;
+  color: var(--accent);
+  border-bottom: 2px solid rgba(56, 189, 248, 0.3);
+  padding-bottom: 0.2em;
+}
+
+.prompter-h2 {
+  font-size: 1.22em;
+  color: #38bdf8;
+}
+
+.prompter-h3 {
+  font-size: 1.12em;
+  color: #7dd3fc;
+}
+
+.prompter-h4 {
+  font-size: 1.05em;
+  color: #bae6fd;
+}
+
+.prompter-bold {
+  font-weight: 900;
+  color: #ffffff;
+  text-decoration: underline;
+  text-decoration-color: rgba(56, 189, 248, 0.45);
+  text-underline-offset: 4px;
+}
+
+.prompter-italic {
+  font-style: italic;
+  opacity: 0.88;
+}
+
+.prompter-del {
+  text-decoration: line-through;
+  opacity: 0.55;
+}
+
+.prompter-code {
+  font-family: monospace;
+  background: rgba(255, 255, 255, 0.12);
+  padding: 0.1em 0.3em;
+  border-radius: 0.25em;
+  font-size: 0.85em;
+}
+
+/* Stage Direction / Actor Cues (Not Spoken) */
+.prompter-cue {
+  display: inline-block;
+  padding: 0.15em 0.55em;
+  margin: 0.15em 0.25em;
+  border-radius: 0.45em;
+  background: rgba(56, 189, 248, 0.15);
+  border: 1.5px dashed rgba(56, 189, 248, 0.45);
+  color: #7dd3fc;
+  font-size: 0.8em;
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  vertical-align: middle;
+}
+
+/* Horizontal Rule Scene Break / Pause Bar */
+.prompter-pause-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 1.6em 0;
+  padding: 0.6em 0;
+  border-top: 2px dashed rgba(255, 255, 255, 0.25);
+  border-bottom: 2px dashed rgba(255, 255, 255, 0.25);
+  color: var(--drawer-muted);
+  font-size: 0.72em;
+  letter-spacing: 0.15em;
+  font-weight: 700;
+  text-transform: uppercase;
+  user-select: none;
+}
+
+.prompter-list {
+  margin: 0.4em 0 0.6em 0;
+  padding-left: 1.6em;
+  list-style-position: outside;
+}
+
+.prompter-list li {
+  margin-bottom: 0.35em;
+}
+
+.prompter-p {
+  margin: 0 0 0.55em 0;
+}
+
+.prompter-line-break {
+  height: 1.2em;
+}
+
+/* ==========================================================================
+   File Drag & Drop Overlay
+   ========================================================================== */
+.file-drop-zone {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  background: rgba(15, 23, 42, 0.9);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  transition: opacity 0.2s ease, visibility 0.2s;
+}
+
+.file-drop-zone.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.file-drop-box {
+  max-width: 500px;
+  width: 100%;
+  padding: 3rem 2rem;
+  border: 3px dashed var(--accent);
+  border-radius: 1.5rem;
+  background: rgba(56, 189, 248, 0.08);
+  text-align: center;
+  box-shadow: 0 0 40px rgba(56, 189, 248, 0.25);
+  animation: dropPulse 1.5s infinite alternate ease-in-out;
+}
+
+@keyframes dropPulse {
+  from { transform: scale(0.98); }
+  to { transform: scale(1.02); }
+}
+
+.file-drop-icon {
+  font-size: 3.5rem;
+  margin-bottom: 1rem;
+}
+
+.file-drop-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin-bottom: 0.5rem;
+}
+
+.file-drop-sub {
+  font-size: 0.95rem;
+  color: var(--drawer-muted);
+}
+
+

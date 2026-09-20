@@ -3,7 +3,7 @@
  * Strategy: Cache-First for ultra-fast load and 100% offline-first reliability.
  */
 
-const CACHE_NAME = 'teleprompter-v1.4.0';
+const CACHE_NAME = 'teleprompter-v1.5.0';
 
 const PRECACHE_ASSETS = [
   './',
@@ -19,7 +19,8 @@ const PRECACHE_ASSETS = [
   './js/scroller.js',
   './js/controls.js',
   './js/ui/drawer.js',
-  './js/ui/welcome.js'
+  './js/ui/welcome.js',
+  './js/markdown.js'
 ];
 
 // Install Event: Pre-cache the entire application shell

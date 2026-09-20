@@ -10,22 +10,28 @@ export const STORAGE_KEYS = {
   SCRIPT: 'script'
 };
 
-export const WELCOME_DEMO_SCRIPT = `Welcome to Teleprompter Web App!
+export const WELCOME_DEMO_SCRIPT = `# Welcome to Teleprompter
 
-A lightweight, privacy-focused teleprompter built for smooth 60+ FPS scrolling and professional presentation workflows.
+A **lightweight**, privacy-focused teleprompter built for smooth **60+ FPS scrolling** and professional presentation workflows.
 
-Why creators and speakers choose this teleprompter:
-⚡ 60+ FPS Fluid Motion: GPU-accelerated sub-pixel precision for jitter-free reading.
-🔒 100% Offline & Private: Zero tracking or external calls. Your scripts stay strictly in local storage.
-🪞 Physical Glass Mirroring: Instant horizontal reflection mode for beam-splitter prompter rigs.
-📱 PWA & Adaptive Controls: Seamless touch gestures for mobile/tablet and ergonomic keyboard shortcuts for desktop.
+## Why Creators Choose Us
+- ⚡ **60+ FPS Fluid Motion:** GPU sub-pixel precision for jitter-free reading.
+- 🔒 **100% Offline & Private:** Zero tracking. Your scripts stay strictly in local storage.
+- 🪞 **Physical Glass Mirroring:** Reflection flip for beam-splitter prompter glass rigs.
+- 📱 **PWA & Adaptive Controls:** Touch gestures and keyboard shortcuts.
 
-Quick Navigation:
-• Tap screen or press SPACE to start/pause.
-• Drag finger or use Mouse Wheel / Arrow keys to scroll.
-• Open Settings (⚙️) to adjust speed, font size, margins, and contrast themes.
+[Take a breath, smile, and look at the camera]
 
-Paste or write your own speech in the Settings drawer anytime!`;
+---
+
+## Quick Navigation
+• Tap screen or press **SPACE** to start or pause.
+• Drag finger or use **Mouse Wheel / Arrow keys** to scroll.
+• Open **Settings (⚙️)** to paste your script, adjust speed, and customize colors.
+
+[Pause for 2 seconds]
+
+To enter your presentation speech, open ⚙️ **Settings & Script** anytime!`;
 
 export const DEFAULT_STATE = Object.freeze({
   text: WELCOME_DEMO_SCRIPT,
@@ -42,6 +48,7 @@ export const DEFAULT_STATE = Object.freeze({
   countdownShowScript: true, // keep script visible without blur during countdown
   showProgressBar: true, // visual reading progress bar at top of screen
   showTouchControls: false, // on-screen floating touch controls (play, speed, rewind)
+  renderMarkdown: true, // render rich Markdown formatting (headings, bold, cues)
   reverseScroll: false, // backwards scrolling flag
   isCountingDown: false // active countdown status
 });

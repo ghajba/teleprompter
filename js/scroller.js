@@ -5,6 +5,7 @@
  */
 
 import { store } from './state.js';
+import { stripMarkdown } from './markdown.js';
 
 class ScrollerEngine {
   constructor() {
@@ -79,8 +80,8 @@ class ScrollerEngine {
 
       // Fallback estimate based on word count if layout has not completed yet
       const text = store.getState().text || '';
-      const trimmed = text.trim();
-      const words = trimmed ? trimmed.split(/\s+/).length : 0;
+      const cleanText = stripMarkdown(text);
+      const words = cleanText ? cleanText.split(/\s+/).length : 0;
       const estimatedHeight = Math.max(300, words * 12);
       const textHeight = rawHeight > 50 ? rawHeight : estimatedHeight;
 
@@ -188,8 +189,8 @@ class ScrollerEngine {
   getMetrics() {
     const text = store.getState().text || '';
     const speed = store.getState().speed || 35; // px per sec
-    const trimmed = text.trim();
-    const words = trimmed ? trimmed.split(/\s+/).length : 0;
+    const cleanText = stripMarkdown(text);
+    const words = cleanText ? cleanText.split(/\s+/).length : 0;
 
     const progress = this.getProgressPercent();
     const remainingScroll = Math.max(0, this._maxScrollY - this._scrollY);

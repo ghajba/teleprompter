@@ -5,6 +5,7 @@
 
 import { store, WELCOME_DEMO_SCRIPT } from '../state.js';
 import { scroller } from '../scroller.js';
+import { stripMarkdown } from '../markdown.js';
 
 export class DrawerController {
   constructor() {
@@ -16,6 +17,12 @@ export class DrawerController {
     this._scriptInput = document.getElementById('scriptInput');
     this._wordCountEl = document.getElementById('wordCount');
     this._charCountEl = document.getElementById('charCount');
+
+    // Markdown Help elements
+    this._btnToggleMarkdownHelp = document.getElementById('btnToggleMarkdownHelp');
+    this._btnCloseMarkdownHelp = document.getElementById('btnCloseMarkdownHelp');
+    this._markdownHelpBox = document.getElementById('markdownHelpBox');
+    this._renderMarkdownToggle = document.getElementById('renderMarkdownToggle');
 
     this._speedSlider = document.getElementById('speedSlider');
     this._speedValue = document.getElementById('speedValue');
@@ -85,6 +92,18 @@ export class DrawerController {
       this._btnOpenWelcomeGuide.addEventListener('click', () => {
         this.close();
         if (this._onOpenWelcome) this._onOpenWelcome();
+      });
+    }
+
+    // Markdown help cheatsheet toggle
+    if (this._btnToggleMarkdownHelp && this._markdownHelpBox) {
+      this._btnToggleMarkdownHelp.addEventListener('click', () => {
+        this._markdownHelpBox.classList.toggle('hidden');
+      });
+    }
+    if (this._btnCloseMarkdownHelp && this._markdownHelpBox) {
+      this._btnCloseMarkdownHelp.addEventListener('click', () => {
+        this._markdownHelpBox.classList.add('hidden');
       });
     }
 
@@ -267,6 +286,13 @@ export class DrawerController {
       });
     }
 
+    // Render Markdown toggle
+    if (this._renderMarkdownToggle) {
+      this._renderMarkdownToggle.addEventListener('change', (e) => {
+        store.setState({ renderMarkdown: e.target.checked });
+      });
+    }
+
     // Theme color presets
     const themePills = document.querySelectorAll('.theme-pill');
     themePills.forEach((pill) => {
@@ -281,6 +307,10 @@ export class DrawerController {
   _syncFromStore(state, changedKeys) {
     if (changedKeys.includes('showTouchControls') && this._touchControlsToggle) {
       this._touchControlsToggle.checked = !!state.showTouchControls;
+    }
+
+    if (changedKeys.includes('renderMarkdown') && this._renderMarkdownToggle) {
+      this._renderMarkdownToggle.checked = !!state.renderMarkdown;
     }
 
     if (changedKeys.includes('countdownDuration') && this._countdownSelect) {
@@ -339,9 +369,9 @@ export class DrawerController {
   }
 
   _updateTextStats(text) {
-    const trimmed = text.trim();
-    const words = trimmed ? trimmed.split(/\s+/).length : 0;
-    const chars = text.length;
+    const cleanText = stripMarkdown(text || '');
+    const words = cleanText ? cleanText.split(/\s+/).length : 0;
+    const chars = (text || '').length;
 
     if (this._wordCountEl) this._wordCountEl.textContent = `${words} words`;
     if (this._charCountEl) this._charCountEl.textContent = `${chars} chars`;

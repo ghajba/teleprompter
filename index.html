@@ -121,6 +121,15 @@
     </div>
   </div>
 
+  <!-- File Drag & Drop Overlay -->
+  <div id="fileDropZone" class="file-drop-zone hidden" aria-hidden="true">
+    <div class="file-drop-box">
+      <div class="file-drop-icon">📂</div>
+      <div class="file-drop-title">Drop Script File Here</div>
+      <div class="file-drop-sub">Accepts .txt and .md markdown files</div>
+    </div>
+  </div>
+
   <!-- Floating Heads-Up Display (Status, Speed & Reading Metrics) -->
   <aside id="hud" class="prompter-hud" aria-live="polite">
     <span id="hudDot" class="hud-status-dot"></span>
@@ -167,12 +176,33 @@
       <!-- Section 1: Script Editor -->
       <section class="drawer-section">
         <div class="control-header">
-          <label for="scriptInput" class="section-label">Presentation Script</label>
-          <span class="script-meta">
-            <span id="wordCount">0 words</span> &bull; <span id="charCount">0 chars</span>
-          </span>
+          <div class="header-label-group">
+            <label for="scriptInput" class="section-label">Presentation Script</label>
+            <span class="script-meta">
+              <span id="wordCount">0 words</span> &bull; <span id="charCount">0 chars</span>
+            </span>
+          </div>
+          <button type="button" id="btnToggleMarkdownHelp" class="btn-mini" title="Markdown formatting tips">✨ Markdown Guide</button>
         </div>
-        <textarea id="scriptInput" class="script-textarea" placeholder="Paste or type your presentation script here..."></textarea>
+
+        <!-- Markdown Cheatsheet Box (Collapsible) -->
+        <div id="markdownHelpBox" class="markdown-help-box hidden">
+          <div class="markdown-help-header">
+            <span class="markdown-help-title">✨ Markdown Formatting Guide</span>
+            <button type="button" id="btnCloseMarkdownHelp" class="help-close-btn" aria-label="Close guide">&times;</button>
+          </div>
+          <div class="markdown-help-grid">
+            <div class="help-row"><code># Title</code><span>Big Section Heading</span></div>
+            <div class="help-row"><code>## Section</code><span>Medium Heading</span></div>
+            <div class="help-row"><code>**stress**</code><span>Bold Spoken Emphasis</span></div>
+            <div class="help-row"><code>*tone*</code><span>Italic Pace / Direction</span></div>
+            <div class="help-row"><code>[Pause 2s]</code><span>Stage Direction (Not Spoken)</span></div>
+            <div class="help-row"><code>---</code><span>Scene Break / Pause Bar</span></div>
+            <div class="help-row"><code>- item</code><span>Bulleted Talking Point</span></div>
+          </div>
+        </div>
+
+        <textarea id="scriptInput" class="script-textarea" placeholder="Paste or type your presentation script here in Settings (Markdown supported)..."></textarea>
       </section>
 
       <!-- Section 2: Playback Action Buttons -->
@@ -288,6 +318,17 @@
             <span>Show On-Screen Touch Controls</span>
             <div class="switch">
               <input type="checkbox" id="touchControlsToggle">
+              <span class="slider-round"></span>
+            </div>
+          </label>
+        </div>
+
+        <!-- Render Markdown toggle -->
+        <div class="control-row" style="margin-top: 0.6rem;">
+          <label class="toggle-switch-label">
+            <span>Render Markdown Formatting</span>
+            <div class="switch">
+              <input type="checkbox" id="renderMarkdownToggle" checked>
               <span class="slider-round"></span>
             </div>
           </label>
