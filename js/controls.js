@@ -86,6 +86,23 @@ export class ControlsManager {
         scroller.reset();
         break;
 
+      case 'PageUp':
+      case 'ArrowLeft':
+        e.preventDefault();
+        scroller.setScrollY(Math.max(0, scroller.getScrollY() - 160));
+        break;
+
+      case 'PageDown':
+      case 'ArrowRight':
+        e.preventDefault();
+        scroller.setScrollY(scroller.getScrollY() + 160);
+        break;
+
+      case 'KeyB': // Toggle reverse scrolling
+        e.preventDefault();
+        store.setState({ reverseScroll: !store.getState().reverseScroll });
+        break;
+
       case 'KeyF':
         e.preventDefault();
         this.toggleFullscreen();

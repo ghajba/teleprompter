@@ -16,6 +16,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const hudDot = document.getElementById('hudDot');
   const hudSpeed = document.getElementById('hudSpeed');
   const hudStatus = document.getElementById('hudStatus');
+  const hudTime = document.getElementById('hudTime');
+  const hudWpm = document.getElementById('hudWpm');
+
+  const readingProgressBar = document.getElementById('readingProgressBar');
+  const countdownOverlay = document.getElementById('countdownOverlay');
 
   // Initialize UI controllers
   const drawerController = new DrawerController();
@@ -26,9 +31,24 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Mount components
-  scroller.init(prompterText);
+  scroller.init({
+    contentEl: prompterText,
+    progressBarEl: readingProgressBar,
+    countdownOverlayEl: countdownOverlay
+  });
   controlsManager.init();
   drawerController.init(controlsManager);
+
+  // Periodic metrics update for HUD (every 250ms)
+  setInterval(() => {
+    const metrics = scroller.getMetrics();
+    if (hudTime) {
+      hudTime.textContent = metrics.remainingFormatted;
+    }
+    if (hudWpm) {
+      hudWpm.textContent = `${metrics.wpm} wpm`;
+    }
+  }, 250);
 
   // Apply state to DOM & CSS Custom Properties
   function applyState(state, changedKeys) {
@@ -53,6 +73,10 @@ document.addEventListener('DOMContentLoaded', () => {
       root.style.setProperty('--eyeline-top', `${state.eyelinePosition}%`);
     }
 
+    if (changedKeys.includes('showProgressBar') && readingProgressBar) {
+      readingProgressBar.classList.toggle('hidden', !state.showProgressBar);
+    }
+
     if (changedKeys.includes('text') && prompterText) {
       prompterText.textContent = state.text;
     }
@@ -62,15 +86,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // HUD status updates
-    if (changedKeys.includes('isPlaying') || changedKeys.includes('speed')) {
+    if (changedKeys.includes('isPlaying') || changedKeys.includes('speed') || changedKeys.includes('reverseScroll')) {
       if (hudDot) {
         hudDot.classList.toggle('playing', state.isPlaying);
       }
       if (hudStatus) {
-        hudStatus.textContent = state.isPlaying ? 'Scrolling' : 'Paused';
+        if (state.reverseScroll && state.isPlaying) {
+          hudStatus.textContent = '⏪ Rewind';
+        } else if (state.isPlaying) {
+          hudStatus.textContent = 'Scrolling';
+        } else {
+          hudStatus.textContent = 'Paused';
+        }
       }
       if (hudSpeed) {
-        hudSpeed.textContent = `${state.speed} px/s`;
+        hudSpeed.textContent = `${state.reverseScroll ? '-' : ''}${state.speed} px/s`;
       }
       if (hud) {
         hud.classList.toggle('autohide', state.isPlaying);

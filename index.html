@@ -19,14 +19,26 @@
   <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="css/prompter.css">
   <link rel="stylesheet" href="css/sidebar.css">
-</head>
 <body>
 
-  <!-- Floating Heads-Up Display (Status & Speed) -->
+  <!-- Reading Progress Bar -->
+  <div id="readingProgressBar" class="reading-progress-bar"></div>
+
+  <!-- Countdown Overlay -->
+  <div id="countdownOverlay" class="countdown-overlay" aria-live="assertive">
+    <div class="countdown-box">
+      <div class="countdown-number pulse">3</div>
+      <div class="countdown-sub">Get Ready... Press Space to cancel</div>
+    </div>
+  </div>
+
+  <!-- Floating Heads-Up Display (Status, Speed & Reading Metrics) -->
   <aside id="hud" class="prompter-hud" aria-live="polite">
     <span id="hudDot" class="hud-status-dot"></span>
     <span id="hudStatus">Paused</span>
     <span id="hudSpeed" class="hud-speed-badge">35 px/s</span>
+    <span class="hud-metric-pill" title="Estimated time remaining">⏱ <strong id="hudTime">00:00</strong></span>
+    <span class="hud-metric-pill" title="Estimated reading speed">📖 <strong id="hudWpm">130 wpm</strong></span>
   </aside>
 
   <!-- Floating Settings & Script Drawer Toggle -->
@@ -74,22 +86,58 @@
 
       <!-- Section 2: Playback Action Buttons -->
       <section class="drawer-section">
-        <span class="section-label">Playback</span>
+        <span class="section-label">Playback & Direction</span>
         <div class="btn-grid">
           <button id="btnPlayPause" class="btn-ctrl btn-primary">▶ Play</button>
           <button id="btnReset" class="btn-ctrl">↺ Reset Top</button>
         </div>
-        <button id="btnFullscreen" class="btn-ctrl" style="margin-top: 0.4rem;">⛶ Toggle Fullscreen (F)</button>
+        <div class="btn-grid" style="margin-top: 0.4rem;">
+          <button id="btnRewind" class="btn-ctrl">⏪ Rewind Step</button>
+          <button id="btnFullscreen" class="btn-ctrl">⛶ Fullscreen (F)</button>
+        </div>
+        
+        <!-- Reverse scroll toggle -->
+        <div class="control-row" style="margin-top: 0.6rem;">
+          <label class="toggle-switch-label">
+            <span>Scroll Backwards (Reverse)</span>
+            <div class="switch">
+              <input type="checkbox" id="reverseToggle">
+              <span class="slider-round"></span>
+            </div>
+          </label>
+        </div>
+
         <button id="btnInstallApp" class="btn-ctrl" style="display: none; margin-top: 0.4rem; border-color: var(--accent); color: var(--accent);">📲 Install App to Device</button>
       </section>
 
-      <!-- Section 3: Speed Control -->
+      <!-- Section 3: Speed & Timing -->
       <section class="drawer-section">
         <div class="control-header">
           <label for="speedSlider" class="section-label">Scroll Speed</label>
           <span id="speedValue" class="control-value">35 px/s</span>
         </div>
         <input type="range" id="speedSlider" min="5" max="150" step="1" value="35">
+
+        <!-- Countdown selector -->
+        <div class="control-row" style="margin-top: 0.75rem;">
+          <label for="countdownSelect" style="font-size: 0.85rem; margin-bottom: 0.25rem;">Start Countdown</label>
+          <select id="countdownSelect" class="select-input">
+            <option value="3">3 Seconds (Recommended)</option>
+            <option value="5">5 Seconds</option>
+            <option value="0">Instant (No Countdown)</option>
+          </select>
+        </div>
+
+        <!-- Progress bar toggle -->
+        <div class="control-row" style="margin-top: 0.6rem;">
+          <label class="toggle-switch-label">
+            <span>Show Reading Progress Bar</span>
+            <div class="switch">
+              <input type="checkbox" id="progressBarToggle" checked>
+              <span class="slider-round"></span>
+            </div>
+          </label>
+        </div>
       </section>
 
       <!-- Section 4: Typography & Layout -->
@@ -159,6 +207,8 @@
         <div class="shortcut-list">
           <div class="shortcut-item"><span>Play / Pause</span><kbd>Space</kbd></div>
           <div class="shortcut-item"><span>Adjust Speed</span><kbd>&uarr; / &darr;</kbd> or <kbd>[ / ]</kbd></div>
+          <div class="shortcut-item"><span>Rewind / Forward Step</span><kbd>&larr; / &rarr;</kbd> or <kbd>PgUp / PgDn</kbd></div>
+          <div class="shortcut-item"><span>Toggle Reverse Direction</span><kbd>B</kbd></div>
           <div class="shortcut-item"><span>Reset to Top</span><kbd>R</kbd> or <kbd>Home</kbd></div>
           <div class="shortcut-item"><span>Toggle Fullscreen</span><kbd>F</kbd></div>
           <div class="shortcut-item"><span>Close Drawer</span><kbd>Esc</kbd></div>

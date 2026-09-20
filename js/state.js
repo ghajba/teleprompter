@@ -34,11 +34,15 @@ Press R or HOME to reset to the top.`,
   textColor: '#ffffff',
   bgColor: '#000000',
   marginWidth: 75, // percentage of viewport width (40% - 100%)
-  eyelinePosition: 35 // percentage from top of screen (15% - 70%)
+  eyelinePosition: 35, // percentage from top of screen (15% - 70%)
+  countdownDuration: 3, // countdown seconds before starting (0, 3, 5)
+  showProgressBar: true, // visual reading progress bar at top of screen
+  reverseScroll: false, // backwards scrolling flag
+  isCountingDown: false // active countdown status
 });
 
 // Non-persisted runtime keys (should always reset to default on launch)
-const TRANSIENT_KEYS = new Set(['isPlaying']);
+const TRANSIENT_KEYS = new Set(['isPlaying', 'reverseScroll', 'isCountingDown']);
 
 class StateStore {
   constructor() {

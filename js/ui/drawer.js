@@ -36,6 +36,12 @@ export class DrawerController {
     this._btnPlayPause = document.getElementById('btnPlayPause');
     this._btnReset = document.getElementById('btnReset');
     this._btnFullscreen = document.getElementById('btnFullscreen');
+    this._btnRewind = document.getElementById('btnRewind');
+
+    // Timing & Direction inputs
+    this._countdownSelect = document.getElementById('countdownSelect');
+    this._progressBarToggle = document.getElementById('progressBarToggle');
+    this._reverseToggle = document.getElementById('reverseToggle');
 
     this._isOpen = false;
   }
@@ -161,6 +167,36 @@ export class DrawerController {
       });
     }
 
+    // Rewind step button
+    if (this._btnRewind) {
+      this._btnRewind.addEventListener('click', () => {
+        const cur = scroller.getScrollY();
+        scroller.setScrollY(Math.max(0, cur - 160));
+      });
+    }
+
+    // Countdown duration select
+    if (this._countdownSelect) {
+      this._countdownSelect.addEventListener('change', (e) => {
+        const val = parseInt(e.target.value, 10);
+        store.setState({ countdownDuration: isNaN(val) ? 0 : val });
+      });
+    }
+
+    // Progress bar toggle
+    if (this._progressBarToggle) {
+      this._progressBarToggle.addEventListener('change', (e) => {
+        store.setState({ showProgressBar: e.target.checked });
+      });
+    }
+
+    // Reverse scroll toggle
+    if (this._reverseToggle) {
+      this._reverseToggle.addEventListener('change', (e) => {
+        store.setState({ reverseScroll: e.target.checked });
+      });
+    }
+
     // Theme color presets
     const themePills = document.querySelectorAll('.theme-pill');
     themePills.forEach((pill) => {
@@ -173,6 +209,18 @@ export class DrawerController {
   }
 
   _syncFromStore(state, changedKeys) {
+    if (changedKeys.includes('countdownDuration') && this._countdownSelect) {
+      this._countdownSelect.value = String(state.countdownDuration);
+    }
+
+    if (changedKeys.includes('showProgressBar') && this._progressBarToggle) {
+      this._progressBarToggle.checked = state.showProgressBar;
+    }
+
+    if (changedKeys.includes('reverseScroll') && this._reverseToggle) {
+      this._reverseToggle.checked = state.reverseScroll;
+    }
+
     if (changedKeys.includes('text') && this._scriptInput && this._scriptInput.value !== state.text) {
       this._scriptInput.value = state.text;
       this._updateTextStats(state.text);
