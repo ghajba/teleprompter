@@ -246,6 +246,32 @@
   letter-spacing: 0.02em;
 }
 
+@media (max-width: 640px) {
+  .prompter-hud {
+    top: 0.75rem;
+    left: 0.75rem;
+    gap: 0.35rem;
+    padding: 0.32rem 0.6rem;
+    font-size: 0.76rem;
+    max-width: calc(100vw - 4.25rem);
+    overflow: hidden;
+  }
+
+  .hud-pace-pill {
+    display: none;
+  }
+
+  .hud-metric-pill {
+    padding: 0.12rem 0.4rem;
+    font-size: 0.72rem;
+  }
+
+  .hud-version-pill {
+    padding: 0.12rem 0.45rem;
+    font-size: 0.68rem;
+  }
+}
+
 /* App Version Watermark on Canvas */
 .app-version-watermark {
   position: fixed;

@@ -20,17 +20,62 @@ export function isSpeechRecognitionSupported() {
 }
 
 /**
- * Normalizes text for fuzzy token matching (removes punctuation, accents, lowercase).
+ * Normalizes text for fuzzy token matching (removes punctuation, accents, lowercase, German ß).
  * @param {string} str
  * @returns {string}
  */
 export function normalizeWord(str) {
   return (str || '')
     .toLowerCase()
+    .replace(/ß/g, 'ss') // Normalize German Eszett
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '') // remove diacritics
+    .replace(/[\u0300-\u036f]/g, '') // remove diacritics (ä->a, ö->o, ü->u, etc.)
     .replace(/[^\w\s]/g, '') // remove punctuation
     .trim();
+}
+
+/**
+ * Detects language from script text (German, Hungarian, English).
+ * @param {string} text
+ * @returns {string} e.g. 'de-DE', 'hu-HU', 'en-US'
+ */
+export function detectScriptLanguage(text) {
+  if (!text) return 'en-US';
+  const sample = ` ${text.toLowerCase().replace(/\s+/g, ' ')} `;
+
+  // Distinctive German clues
+  const germanClues = [' und ', ' der ', ' die ', ' das ', ' ist ', ' nicht ', ' mit ', ' für ', ' auf ', ' ein ', ' eine ', ' sich ', ' sie ', ' wir ', ' ich ', ' werden ', ' haben ', ' über ', ' oder ', ' aber ', ' wie ', ' wenn ', ' dass ', ' hier ', ' bitte ', ' heute '];
+  // Distinctive Hungarian clues
+  const hungarianClues = [' hogy ', ' nem ', ' vagy ', ' és ', ' egy ', ' van ', ' volt ', ' meg ', ' kell ', ' ez ', ' az ', ' mint ', ' csak ', ' de ', ' ha ', ' már ', ' sok ', ' miért ', ' köszönöm '];
+  // Distinctive English clues
+  const englishClues = [' the ', ' and ', ' to ', ' of ', ' in ', ' that ', ' is ', ' you ', ' for ', ' with ', ' on ', ' this ', ' are ', ' from ', ' have ', ' will ', ' with ', ' about ', ' welcome '];
+
+  let germanScore = (sample.match(/[äöüß]/g) || []).length * 2;
+  for (const word of germanClues) {
+    if (sample.includes(word)) germanScore += 3;
+  }
+
+  let hungarianScore = (sample.match(/[áéíóöőúüű]/g) || []).length * 2;
+  for (const word of hungarianClues) {
+    if (sample.includes(word)) hungarianScore += 3;
+  }
+
+  let englishScore = 0;
+  for (const word of englishClues) {
+    if (sample.includes(word)) englishScore += 3;
+  }
+
+  if (germanScore > hungarianScore && germanScore > englishScore && germanScore >= 5) {
+    return 'de-DE';
+  }
+  if (hungarianScore > germanScore && hungarianScore > englishScore && hungarianScore >= 5) {
+    return 'hu-HU';
+  }
+  if (englishScore > germanScore && englishScore > hungarianScore && englishScore >= 5) {
+    return 'en-US';
+  }
+
+  return (typeof navigator !== 'undefined' && navigator.language) ? navigator.language : 'en-US';
 }
 
 export class SpeechFollowEngine {
@@ -129,8 +174,8 @@ export class SpeechFollowEngine {
       const selectedLang = store.getState().voiceLanguage || 'auto';
       if (selectedLang !== 'auto') {
         this._recognition.lang = selectedLang;
-      } else if (typeof navigator !== 'undefined') {
-        this._recognition.lang = navigator.language || 'hu-HU';
+      } else {
+        this._recognition.lang = detectScriptLanguage(store.getState().text || '');
       }
 
       this._recognition.onstart = () => {

@@ -39,6 +39,22 @@
   fill: currentColor;
 }
 
+@media (max-width: 640px) {
+  .drawer-toggle-btn {
+    top: 0.75rem;
+    right: 0.75rem;
+    padding: 0.55rem;
+    width: 42px;
+    height: 42px;
+    justify-content: center;
+    border-radius: 50%;
+  }
+
+  .drawer-toggle-btn .drawer-toggle-text {
+    display: none;
+  }
+}
+
 /* Sidebar Drawer Panel */
 .drawer {
   position: fixed;
