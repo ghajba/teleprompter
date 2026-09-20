@@ -232,6 +232,8 @@
 .countdown-overlay.active {
   opacity: 1;
   pointer-events: auto;
+  cursor: pointer;
+  touch-action: manipulation;
 }
 
 /* Transparent mode: script text stays completely sharp and readable behind the countdown */
@@ -258,6 +260,7 @@
   flex-direction: column;
   align-items: center;
   gap: 1rem;
+  cursor: pointer;
 }
 
 .countdown-number {

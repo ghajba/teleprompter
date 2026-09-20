@@ -20,6 +20,7 @@ class ScrollerEngine {
 
     this._countdownTimerId = null;
     this._countdownSecondsLeft = 0;
+    this._lastCountdownCancelTime = 0;
 
     // Listen to store updates
     store.subscribe((state, changedKeys) => {
@@ -49,6 +50,21 @@ class ScrollerEngine {
     this._contentEl = elements.contentEl;
     this._progressBarEl = elements.progressBarEl || null;
     this._countdownOverlayEl = elements.countdownOverlayEl || null;
+
+    if (this._countdownOverlayEl) {
+      // Tapping or clicking the countdown overlay cancels the countdown immediately
+      const cancelFromOverlay = (e) => {
+        if (store.getState().isCountingDown) {
+          if (e.cancelable) {
+            e.preventDefault();
+          }
+          e.stopPropagation();
+          this.cancelCountdown();
+        }
+      };
+      this._countdownOverlayEl.addEventListener('click', cancelFromOverlay);
+      this._countdownOverlayEl.addEventListener('touchend', cancelFromOverlay);
+    }
 
     this._updateMaxScroll();
     this.render();
@@ -322,10 +338,27 @@ class ScrollerEngine {
   }
 
   /**
+   * Cancels any active countdown timer and resets overlay state.
+   */
+  cancelCountdown() {
+    this._cancelCountdown();
+  }
+
+  /**
+   * Returns timestamp of when countdown was last cancelled.
+   * Useful to debounce or prevent ghost click events after overlay dismiss.
+   * @returns {number}
+   */
+  getLastCountdownCancelTime() {
+    return this._lastCountdownCancelTime;
+  }
+
+  /**
    * Cancels any active countdown timer and hides overlay.
    * @private
    */
   _cancelCountdown() {
+    this._lastCountdownCancelTime = Date.now();
     if (this._countdownTimerId) {
       clearInterval(this._countdownTimerId);
       this._countdownTimerId = null;

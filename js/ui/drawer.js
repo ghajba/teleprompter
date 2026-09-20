@@ -362,9 +362,17 @@ export class DrawerController {
       this._fontFamilySelect.value = state.fontFamily;
     }
 
-    if (changedKeys.includes('isPlaying') && this._btnPlayPause) {
-      this._btnPlayPause.textContent = state.isPlaying ? '⏸ Pause' : '▶ Play';
-      this._btnPlayPause.classList.toggle('btn-primary', !state.isPlaying);
+    if ((changedKeys.includes('isPlaying') || changedKeys.includes('isCountingDown')) && this._btnPlayPause) {
+      if (state.isCountingDown) {
+        this._btnPlayPause.textContent = '⏹ Cancel';
+        this._btnPlayPause.classList.remove('btn-primary');
+      } else if (state.isPlaying) {
+        this._btnPlayPause.textContent = '⏸ Pause';
+        this._btnPlayPause.classList.remove('btn-primary');
+      } else {
+        this._btnPlayPause.textContent = '▶ Play';
+        this._btnPlayPause.classList.add('btn-primary');
+      }
     }
   }
 

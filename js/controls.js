@@ -86,8 +86,17 @@ export class ControlsManager {
 
     // Sync touch play/pause button state with store
     store.subscribe((state, changedKeys) => {
-      if (changedKeys.includes('isPlaying') && this._btnTouchPlayPause) {
-        this._btnTouchPlayPause.textContent = state.isPlaying ? '⏸' : '⏯';
+      if ((changedKeys.includes('isPlaying') || changedKeys.includes('isCountingDown')) && this._btnTouchPlayPause) {
+        if (state.isCountingDown) {
+          this._btnTouchPlayPause.textContent = '⏹';
+          this._btnTouchPlayPause.setAttribute('title', 'Cancel countdown');
+        } else if (state.isPlaying) {
+          this._btnTouchPlayPause.textContent = '⏸';
+          this._btnTouchPlayPause.setAttribute('title', 'Pause');
+        } else {
+          this._btnTouchPlayPause.textContent = '⏯';
+          this._btnTouchPlayPause.setAttribute('title', 'Play');
+        }
       }
     });
   }
@@ -125,6 +134,10 @@ export class ControlsManager {
    * @private
    */
   _onTouchStart(e) {
+    if (store.getState().isCountingDown) {
+      scroller.cancelCountdown();
+      return;
+    }
     if (e.target.closest('#drawer') || e.target.closest('#welcomeModal') || e.target.closest('#touchControls') || e.target.closest('button')) {
       return;
     }
@@ -223,6 +236,11 @@ export class ControlsManager {
         break;
 
       case 'Escape':
+        if (store.getState().isCountingDown) {
+          e.preventDefault();
+          scroller.cancelCountdown();
+          return;
+        }
         if (this._isDrawerOpen && this._isDrawerOpen()) {
           if (this._closeDrawer) this._closeDrawer();
         }
@@ -264,6 +282,15 @@ export class ControlsManager {
   _onContainerClick(e) {
     if (this._touchMoved) {
       this._touchMoved = false;
+      return;
+    }
+    // If countdown is running, cancel it immediately
+    if (store.getState().isCountingDown) {
+      scroller.cancelCountdown();
+      return;
+    }
+    // Debounce ghost clicks within 400ms of countdown cancellation
+    if (Date.now() - scroller.getLastCountdownCancelTime() < 400) {
       return;
     }
     // Do not trigger if clicking on interactive widgets, modal, touch controls, or drawer

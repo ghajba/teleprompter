@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.0-rc.5] - 2026-09-20
+
+### Fixed
+- **Countdown Overlay Click/Tap to Cancel:** Fixed a critical bug where an active countdown overlay intercepted all pointer events across the entire viewport (`z-index: 200`) without an event listener, completely preventing users from clicking or tapping anywhere on the screen to stop the countdown.
+- **Universal Cancellation Handlers:** Clicking or tapping anywhere on the screen, pressing <kbd>Space</kbd>, or pressing <kbd>Escape</kbd> now immediately cancels the countdown and returns to the ready state.
+- **Touch Gesture Debouncing:** Added a 400ms dismissal protection window to eliminate "ghost-clicks" on touchscreens where cancelling the countdown could inadvertently re-trigger prompter playback.
+- **Contextual UI Indicators:** Updated the floating touch control bar (`⏹`) and Settings drawer button (`⏹ Cancel`) to dynamically display stop/cancel states during an active countdown.
+
+---
+
 ## [1.0.0-rc.4] - 2026-09-20
 
 ### Added

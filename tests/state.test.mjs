@@ -85,6 +85,12 @@ assert.equal(store.getState().fontSize, 90);
 store.resetToDefaults(true); // keepText = true
 assert.equal(store.getState().fontSize, DEFAULT_STATE.fontSize, 'Font size should reset');
 assert.equal(store.getState().text, 'Custom Speech Script', 'Script text should be preserved');
-console.log('✓ Reset to defaults passed');
+// Test 6: isCountingDown state tracking
+assert.equal(store.getState().isCountingDown, false);
+store.setState({ isCountingDown: true });
+assert.equal(store.getState().isCountingDown, true);
+store.setState({ isCountingDown: false });
+assert.equal(store.getState().isCountingDown, false);
+console.log('✓ Countdown state management passed');
 
 console.log('🎉 All tests passed successfully!');
