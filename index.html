@@ -28,7 +28,96 @@
   <div id="countdownOverlay" class="countdown-overlay" aria-live="assertive">
     <div class="countdown-box">
       <div class="countdown-number pulse">3</div>
-      <div class="countdown-sub">Get Ready... Press Space to cancel</div>
+      <div class="countdown-sub">Get Ready... Tap screen or press Space to cancel</div>
+    </div>
+  </div>
+
+  <!-- Floating On-Screen Mobile Touch Controls -->
+  <nav id="touchControls" class="touch-controls-bar hidden" aria-label="Quick mobile controls">
+    <button type="button" id="btnTouchRewind" class="touch-btn" aria-label="Rewind to start" title="Reset to start">⏪</button>
+    <button type="button" id="btnTouchPlayPause" class="touch-btn touch-btn-primary" aria-label="Play or Pause" title="Play or Pause">⏯</button>
+    <button type="button" id="btnTouchSpeedDown" class="touch-btn" aria-label="Decrease speed" title="Slower (5 px/s)">➖</button>
+    <button type="button" id="btnTouchSpeedUp" class="touch-btn" aria-label="Increase speed" title="Faster (5 px/s)">➕</button>
+  </nav>
+
+  <!-- Welcome & Onboarding Modal -->
+  <div id="welcomeModal" class="welcome-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="welcomeTitle">
+    <div class="welcome-modal">
+      <div class="welcome-header">
+        <div class="welcome-badge">
+          <span class="welcome-badge-dot"></span>
+          <span>Zero-Dependency &bull; Offline PWA</span>
+        </div>
+        <button type="button" id="welcomeClose" class="welcome-close-btn" aria-label="Close welcome modal">&times;</button>
+      </div>
+
+      <h2 id="welcomeTitle" class="welcome-title">Welcome to <span>Teleprompter</span></h2>
+      <p class="welcome-lead">
+        A lightweight, privacy-focused browser teleprompter designed for smooth 60+ FPS scrolling and professional presentation workflows.
+      </p>
+
+      <!-- Key Advantages Grid (from Coming Soon) -->
+      <div class="benefits-grid">
+        <div class="benefit-card">
+          <div class="benefit-icon">⚡</div>
+          <div class="benefit-content">
+            <strong class="benefit-title">60+ FPS Fluid Scroll</strong>
+            <p class="benefit-desc">Sub-pixel precision engine using requestAnimationFrame and GPU hardware transforms.</p>
+          </div>
+        </div>
+        <div class="benefit-card">
+          <div class="benefit-icon">🔒</div>
+          <div class="benefit-content">
+            <strong class="benefit-title">100% Offline &amp; Private</strong>
+            <p class="benefit-desc">Zero tracking or external requests. Your scripts stay strictly in local browser storage.</p>
+          </div>
+        </div>
+        <div class="benefit-card">
+          <div class="benefit-icon">🪞</div>
+          <div class="benefit-content">
+            <strong class="benefit-title">Physical Glass Mirroring</strong>
+            <p class="benefit-desc">Instant reflection flip mode designed for beam-splitter prompter glass rigs.</p>
+          </div>
+        </div>
+        <div class="benefit-card">
+          <div class="benefit-icon">📱</div>
+          <div class="benefit-content">
+            <strong class="benefit-title">PWA &amp; Adaptive Controls</strong>
+            <p class="benefit-desc">Installable to mobile/desktop with touch drag gestures and ergonomic keyboard shortcuts.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Control Guide with Tabs -->
+      <div class="welcome-guide-section">
+        <div class="guide-tabs">
+          <button type="button" id="welcomeTabTouch" class="guide-tab-btn active">👆 Touch &amp; Mobile</button>
+          <button type="button" id="welcomeTabKeyboard" class="guide-tab-btn">⌨️ Keyboard &amp; Desktop</button>
+        </div>
+
+        <div id="welcomePanelTouch" class="welcome-panel">
+          <div class="guide-item"><span>Tap Canvas</span><strong>Play / Pause</strong></div>
+          <div class="guide-item"><span>Swipe Up / Down</span><strong>Manual Scroll</strong></div>
+          <div class="guide-item"><span>Floating Buttons</span><strong>Quick Speed &amp; Rewind</strong></div>
+          <div class="guide-item"><span>Tap ⚙️ Settings</span><strong>Edit Script &amp; Options</strong></div>
+        </div>
+
+        <div id="welcomePanelKeyboard" class="welcome-panel hidden">
+          <div class="guide-item"><span><kbd>Space</kbd></span><strong>Play / Pause</strong></div>
+          <div class="guide-item"><span><kbd>&uarr;</kbd> / <kbd>&darr;</kbd></span><strong>Adjust Speed</strong></div>
+          <div class="guide-item"><span><kbd>R</kbd> or <kbd>Home</kbd></span><strong>Reset to Top</strong></div>
+          <div class="guide-item"><span><kbd>Mouse Wheel</kbd></span><strong>Manual Scroll</strong></div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="welcome-footer">
+        <label class="welcome-checkbox-label">
+          <input type="checkbox" id="welcomeDontShowAgain">
+          <span>Don't show this welcome on startup</span>
+        </label>
+        <button type="button" id="welcomeStartBtn" class="welcome-btn-primary">Start Prompting &rarr;</button>
+      </div>
     </div>
   </div>
 
@@ -97,6 +186,7 @@
           <button id="btnRewind" class="btn-ctrl">⏪ Rewind Step</button>
           <button id="btnFullscreen" class="btn-ctrl">⛶ Fullscreen (F)</button>
         </div>
+        <button id="btnRestoreDemo" class="btn-ctrl" style="margin-top: 0.4rem; border-color: rgba(56, 189, 248, 0.3); color: var(--accent);">📝 Restore Demo Script</button>
         
         <!-- Reverse scroll toggle -->
         <div class="control-row" style="margin-top: 0.6rem;">
@@ -192,6 +282,17 @@
           </label>
         </div>
 
+        <!-- Touch controls toggle -->
+        <div class="control-row" style="margin-top: 0.6rem;">
+          <label class="toggle-switch-label">
+            <span>Show On-Screen Touch Controls</span>
+            <div class="switch">
+              <input type="checkbox" id="touchControlsToggle">
+              <span class="slider-round"></span>
+            </div>
+          </label>
+        </div>
+
         <!-- Font Family -->
         <div class="control-row" style="margin-top: 0.75rem;">
           <label for="fontFamilySelect" style="font-size: 0.85rem; margin-bottom: 0.25rem;">Font Family</label>
@@ -214,19 +315,38 @@
         </div>
       </section>
 
-      <!-- Section 5: Keyboard Shortcuts Reference -->
+      <!-- Section 5: Controls & Shortcuts Guide -->
       <section class="drawer-section">
-        <span class="section-label">Keyboard Shortcuts</span>
-        <div class="shortcut-list">
+        <div class="section-header-with-tabs">
+          <span class="section-label">Controls Guide</span>
+          <div class="drawer-guide-tabs">
+            <button type="button" id="drawerTabTouch" class="drawer-tab-btn">👆 Touch</button>
+            <button type="button" id="drawerTabKeyboard" class="drawer-tab-btn active">⌨️ Keys</button>
+          </div>
+        </div>
+
+        <div id="drawerPanelTouch" class="shortcut-list hidden">
+          <div class="shortcut-item"><span>Play / Pause</span><kbd>Tap Canvas</kbd></div>
+          <div class="shortcut-item"><span>Manual Scroll</span><kbd>Swipe Up / Down</kbd></div>
+          <div class="shortcut-item"><span>Speed Up / Down</span><kbd>➕ / ➖ Buttons</kbd></div>
+          <div class="shortcut-item"><span>Reset to Top</span><kbd>⏪ Button</kbd></div>
+          <div class="shortcut-item"><span>Open Settings</span><kbd>Tap ⚙️</kbd></div>
+        </div>
+
+        <div id="drawerPanelKeyboard" class="shortcut-list">
           <div class="shortcut-item"><span>Play / Pause</span><kbd>Space</kbd></div>
           <div class="shortcut-item"><span>Adjust Speed</span><kbd>&uarr; / &darr;</kbd> or <kbd>[ / ]</kbd></div>
-          <div class="shortcut-item"><span>Manual Scroll</span><kbd>Mouse Wheel</kbd> / Touch</div>
+          <div class="shortcut-item"><span>Manual Scroll</span><kbd>Mouse Wheel</kbd></div>
           <div class="shortcut-item"><span>Rewind / Forward Step</span><kbd>&larr; / &rarr;</kbd> or <kbd>PgUp / PgDn</kbd></div>
           <div class="shortcut-item"><span>Toggle Reverse Direction</span><kbd>B</kbd></div>
           <div class="shortcut-item"><span>Reset to Top</span><kbd>R</kbd> or <kbd>Home</kbd></div>
           <div class="shortcut-item"><span>Toggle Fullscreen</span><kbd>F</kbd></div>
           <div class="shortcut-item"><span>Close Drawer</span><kbd>Esc</kbd></div>
         </div>
+
+        <button type="button" id="btnOpenWelcomeGuide" class="btn-ctrl" style="margin-top: 0.85rem; width: 100%; border-color: rgba(255, 255, 255, 0.15); font-weight: 500;">
+          📖 View Welcome &amp; Benefits Guide
+        </button>
       </section>
     </div>
 

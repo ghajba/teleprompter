@@ -4,7 +4,7 @@
   "description": "Lightweight, zero-dependency offline-first PWA teleprompter with 60+ FPS smooth scrolling",
   "type": "module",
   "scripts": {
-    "test": "node tests/state.test.mjs && node --check sw.js && node --check js/scroller.js && node --check js/controls.js && node --check js/ui/drawer.js && node --check js/app.js",
+    "test": "node tests/state.test.mjs && node --check sw.js && node --check js/scroller.js && node --check js/controls.js && node --check js/ui/drawer.js && node --check js/ui/welcome.js && node --check js/app.js",
     "serve": "npx serve ."
   },
   "keywords": [

@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.0-rc.3] - 2026-09-20
+
+### Added
+- **Interactive Welcome & Onboarding Modal:** Glassmorphism onboarding dialog presenting the 4 core product advantages (60+ FPS fluid motion, 100% offline & private, physical glass mirroring, PWA & adaptive controls) with quick navigation preview.
+- **"Don't Show Again" Persistence:** Users can check `Don't show this welcome on startup` to suppress the modal on future visits (persisted in `localStorage`).
+- **Reopen Welcome Guide anytime:** Added a "📖 View Welcome & Benefits Guide" button in the Settings Drawer to easily reopen the onboarding guide.
+- **Enriched Demo Presentation Script:** Updated the default starter text into a realistic presentation speech highlighting product features and universal controls.
+- **Restore Demo Script Button:** Added a "📝 Restore Demo Script" button in the Drawer to quickly reload the sample presentation text.
+- **Device-Adaptive Controls Guide:** Added dual tabs in the Settings Drawer and Welcome Modal (`👆 Touch & Gestures` vs. `⌨️ Keyboard Shortcuts`), auto-selecting based on detected pointer capability (`isTouchDevice`).
+- **Floating Mobile Touch Controls Bar:** Discreet on-screen floating control bar (`[⏪ Reset] [⏯ Play/Pause] [➖ Speed] [➕ Speed]`) designed for touchscreens, with auto-dimming during playback and a "Show On-Screen Touch Controls" toggle in Settings.
+- **Adaptive Countdown Cancel Text:** Updated countdown overlay guidance to *"Get Ready... Tap screen or press Space to cancel"*.
+
+---
+
 ## [1.0.0-rc.2] - 2026-09-20
 
 ### Added

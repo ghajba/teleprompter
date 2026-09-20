@@ -5,6 +5,14 @@
 import { store } from './state.js';
 import { scroller } from './scroller.js';
 
+export function isTouchDevice() {
+  return typeof window !== 'undefined' && Boolean(
+    ('ontouchstart' in window) ||
+    (typeof navigator !== 'undefined' && navigator.maxTouchPoints > 0) ||
+    (typeof window.matchMedia === 'function' && window.matchMedia('(pointer: coarse)').matches)
+  );
+}
+
 export class ControlsManager {
   /**
    * @param {Object} options
@@ -20,6 +28,11 @@ export class ControlsManager {
     this._touchStartY = null;
     this._touchStartScrollY = 0;
     this._touchMoved = false;
+
+    this._btnTouchRewind = null;
+    this._btnTouchPlayPause = null;
+    this._btnTouchSpeedDown = null;
+    this._btnTouchSpeedUp = null;
 
     this._onKeyDown = this._onKeyDown.bind(this);
     this._onContainerClick = this._onContainerClick.bind(this);
@@ -39,6 +52,44 @@ export class ControlsManager {
     if (this._container) {
       this._container.addEventListener('click', this._onContainerClick);
     }
+
+    // Floating touch controls toolbar buttons
+    this._btnTouchRewind = document.getElementById('btnTouchRewind');
+    this._btnTouchPlayPause = document.getElementById('btnTouchPlayPause');
+    this._btnTouchSpeedDown = document.getElementById('btnTouchSpeedDown');
+    this._btnTouchSpeedUp = document.getElementById('btnTouchSpeedUp');
+
+    if (this._btnTouchRewind) {
+      this._btnTouchRewind.addEventListener('click', (e) => {
+        e.stopPropagation();
+        scroller.reset();
+      });
+    }
+    if (this._btnTouchPlayPause) {
+      this._btnTouchPlayPause.addEventListener('click', (e) => {
+        e.stopPropagation();
+        scroller.toggle();
+      });
+    }
+    if (this._btnTouchSpeedDown) {
+      this._btnTouchSpeedDown.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this._adjustSpeed(-5);
+      });
+    }
+    if (this._btnTouchSpeedUp) {
+      this._btnTouchSpeedUp.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this._adjustSpeed(5);
+      });
+    }
+
+    // Sync touch play/pause button state with store
+    store.subscribe((state, changedKeys) => {
+      if (changedKeys.includes('isPlaying') && this._btnTouchPlayPause) {
+        this._btnTouchPlayPause.textContent = state.isPlaying ? '⏸' : '⏯';
+      }
+    });
   }
 
   destroy() {
@@ -59,8 +110,8 @@ export class ControlsManager {
    * @private
    */
   _onWheel(e) {
-    // If mouse is interacting with the drawer or an active input, allow normal scrolling
-    if (e.target.closest('#drawer') || e.target.closest('textarea') || e.target.closest('input')) {
+    // If mouse is interacting with the drawer, modal, or an active input, allow normal scrolling
+    if (e.target.closest('#drawer') || e.target.closest('#welcomeModal') || e.target.closest('textarea') || e.target.closest('input')) {
       return;
     }
 
@@ -74,14 +125,18 @@ export class ControlsManager {
    * @private
    */
   _onTouchStart(e) {
-    if (e.target.closest('#drawer') || e.target.closest('button')) return;
+    if (e.target.closest('#drawer') || e.target.closest('#welcomeModal') || e.target.closest('#touchControls') || e.target.closest('button')) {
+      return;
+    }
     this._touchStartY = e.touches[0].clientY;
     this._touchStartScrollY = scroller.getScrollY();
     this._touchMoved = false;
   }
 
   _onTouchMove(e) {
-    if (this._touchStartY === null || e.target.closest('#drawer')) return;
+    if (this._touchStartY === null || e.target.closest('#drawer') || e.target.closest('#welcomeModal') || e.target.closest('#touchControls')) {
+      return;
+    }
     const currentY = e.touches[0].clientY;
     const deltaY = this._touchStartY - currentY;
     if (Math.abs(deltaY) > 6) {
@@ -211,8 +266,8 @@ export class ControlsManager {
       this._touchMoved = false;
       return;
     }
-    // Do not trigger if clicking on interactive widgets or drawer
-    if (e.target.closest('#drawer') || e.target.closest('#drawerToggle') || e.target.closest('button') || e.target.closest('input')) {
+    // Do not trigger if clicking on interactive widgets, modal, touch controls, or drawer
+    if (e.target.closest('#drawer') || e.target.closest('#welcomeModal') || e.target.closest('#touchControls') || e.target.closest('#drawerToggle') || e.target.closest('button') || e.target.closest('input')) {
       return;
     }
     scroller.toggle();

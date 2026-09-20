@@ -10,22 +10,25 @@ export const STORAGE_KEYS = {
   SCRIPT: 'script'
 };
 
+export const WELCOME_DEMO_SCRIPT = `Welcome to Teleprompter Web App!
+
+A lightweight, privacy-focused teleprompter built for smooth 60+ FPS scrolling and professional presentation workflows.
+
+Why creators and speakers choose this teleprompter:
+⚡ 60+ FPS Fluid Motion: GPU-accelerated sub-pixel precision for jitter-free reading.
+🔒 100% Offline & Private: Zero tracking or external calls. Your scripts stay strictly in local storage.
+🪞 Physical Glass Mirroring: Instant horizontal reflection mode for beam-splitter prompter rigs.
+📱 PWA & Adaptive Controls: Seamless touch gestures for mobile/tablet and ergonomic keyboard shortcuts for desktop.
+
+Quick Navigation:
+• Tap screen or press SPACE to start/pause.
+• Drag finger or use Mouse Wheel / Arrow keys to scroll.
+• Open Settings (⚙️) to adjust speed, font size, margins, and contrast themes.
+
+Paste or write your own speech in the Settings drawer anytime!`;
+
 export const DEFAULT_STATE = Object.freeze({
-  text: `Welcome to Teleprompter Web App!
-
-You can paste or edit your presentation script directly here.
-
-Key features:
-• Smooth, jitter-free 60+ FPS sub-pixel scrolling
-• Translucent collapsible control drawer
-• Horizontal mirroring for prompter beam-splitter glass
-• Adjustable reading margin, font sizes, and contrast themes
-• Visual eyeline focus guide to maintain eye contact
-• 100% offline-first PWA with local auto-save
-
-Press SPACE to start or pause scrolling.
-Use UP / DOWN arrow keys to adjust speed on the fly.
-Press R or HOME to reset to the top.`,
+  text: WELCOME_DEMO_SCRIPT,
   speed: 35, // pixels per second
   isPlaying: false,
   isMirrored: false,
@@ -38,6 +41,7 @@ Press R or HOME to reset to the top.`,
   countdownDuration: 3, // countdown seconds before starting (0, 3, 5)
   countdownShowScript: true, // keep script visible without blur during countdown
   showProgressBar: true, // visual reading progress bar at top of screen
+  showTouchControls: false, // on-screen floating touch controls (play, speed, rewind)
   reverseScroll: false, // backwards scrolling flag
   isCountingDown: false // active countdown status
 });
@@ -64,12 +68,22 @@ class StateStore {
     const savedConfig = loadItem(STORAGE_KEYS.CONFIG, {});
     const savedText = loadItem(STORAGE_KEYS.SCRIPT, null);
 
+    // Auto-detect touch capability for initial showTouchControls default
+    const isTouch = typeof window !== 'undefined' && Boolean(
+      ('ontouchstart' in window) ||
+      (typeof navigator !== 'undefined' && navigator.maxTouchPoints > 0) ||
+      (typeof window.matchMedia === 'function' && window.matchMedia('(pointer: coarse)').matches)
+    );
+
     return {
       ...DEFAULT_STATE,
+      showTouchControls: isTouch,
       ...savedConfig,
       ...(savedText !== null ? { text: savedText } : {}),
       // Ensure transient keys always start at default
-      isPlaying: false
+      isPlaying: false,
+      reverseScroll: false,
+      isCountingDown: false
     };
   }
 

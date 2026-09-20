@@ -7,6 +7,7 @@ import { store } from './state.js';
 import { scroller } from './scroller.js';
 import { ControlsManager } from './controls.js';
 import { DrawerController } from './ui/drawer.js';
+import { WelcomeModalController } from './ui/welcome.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   const prompterContainer = document.getElementById('prompterContainer');
@@ -21,6 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const readingProgressBar = document.getElementById('readingProgressBar');
   const countdownOverlay = document.getElementById('countdownOverlay');
+  const touchControls = document.getElementById('touchControls');
 
   const prompterTextInner = document.getElementById('prompterTextInner');
   if (prompterTextInner) {
@@ -28,6 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Initialize UI controllers
+  const welcomeController = new WelcomeModalController();
   const drawerController = new DrawerController();
   const controlsManager = new ControlsManager({
     prompterContainer,
@@ -42,7 +45,8 @@ document.addEventListener('DOMContentLoaded', () => {
     countdownOverlayEl: countdownOverlay
   });
   controlsManager.init();
-  drawerController.init(controlsManager);
+  drawerController.init(controlsManager, () => welcomeController.open());
+  welcomeController.init();
 
   // Periodic metrics update for HUD (every 250ms)
   setInterval(() => {
@@ -107,7 +111,11 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    // HUD status updates
+    if (changedKeys.includes('showTouchControls') && touchControls) {
+      touchControls.classList.toggle('hidden', !state.showTouchControls);
+    }
+
+    // HUD & On-screen controls status updates
     if (changedKeys.includes('isPlaying') || changedKeys.includes('speed') || changedKeys.includes('reverseScroll')) {
       if (hudDot) {
         hudDot.classList.toggle('playing', state.isPlaying);
@@ -126,6 +134,9 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       if (hud) {
         hud.classList.toggle('autohide', state.isPlaying);
+      }
+      if (touchControls) {
+        touchControls.classList.toggle('autohide', state.isPlaying);
       }
     }
   }

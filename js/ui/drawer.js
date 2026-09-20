@@ -3,7 +3,7 @@
  * Handles DOM two-way binding with reactive StateStore.
  */
 
-import { store } from '../state.js';
+import { store, WELCOME_DEMO_SCRIPT } from '../state.js';
 import { scroller } from '../scroller.js';
 
 export class DrawerController {
@@ -37,18 +37,29 @@ export class DrawerController {
     this._btnReset = document.getElementById('btnReset');
     this._btnFullscreen = document.getElementById('btnFullscreen');
     this._btnRewind = document.getElementById('btnRewind');
+    this._btnRestoreDemo = document.getElementById('btnRestoreDemo');
 
     // Timing & Direction inputs
     this._countdownSelect = document.getElementById('countdownSelect');
     this._countdownShowScriptToggle = document.getElementById('countdownShowScriptToggle');
     this._progressBarToggle = document.getElementById('progressBarToggle');
+    this._touchControlsToggle = document.getElementById('touchControlsToggle');
     this._reverseToggle = document.getElementById('reverseToggle');
 
+    // Guide & Help elements
+    this._btnOpenWelcomeGuide = document.getElementById('btnOpenWelcomeGuide');
+    this._drawerTabTouch = document.getElementById('drawerTabTouch');
+    this._drawerTabKeyboard = document.getElementById('drawerTabKeyboard');
+    this._drawerPanelTouch = document.getElementById('drawerPanelTouch');
+    this._drawerPanelKeyboard = document.getElementById('drawerPanelKeyboard');
+
     this._isOpen = false;
+    this._onOpenWelcome = null;
   }
 
-  init(controlsManager) {
+  init(controlsManager, onOpenWelcome) {
     this._controls = controlsManager;
+    this._onOpenWelcome = onOpenWelcome;
 
     // Toggle drawer event listeners
     if (this._toggleBtn) {
@@ -56,6 +67,25 @@ export class DrawerController {
     }
     if (this._closeBtn) {
       this._closeBtn.addEventListener('click', () => this.close());
+    }
+
+    // Guide tabs
+    if (this._drawerTabTouch && this._drawerTabKeyboard) {
+      this._drawerTabTouch.addEventListener('click', () => this.selectGuideTab('touch'));
+      this._drawerTabKeyboard.addEventListener('click', () => this.selectGuideTab('keyboard'));
+    }
+
+    const isTouch = ('ontouchstart' in window) ||
+      (navigator.maxTouchPoints > 0) ||
+      (window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+
+    this.selectGuideTab(isTouch ? 'touch' : 'keyboard');
+
+    if (this._btnOpenWelcomeGuide) {
+      this._btnOpenWelcomeGuide.addEventListener('click', () => {
+        this.close();
+        if (this._onOpenWelcome) this._onOpenWelcome();
+      });
     }
 
     // Bind inputs to store
@@ -68,6 +98,20 @@ export class DrawerController {
 
     // Initial sync
     this._syncFromStore(store.getState(), Object.keys(store.getState()));
+  }
+
+  selectGuideTab(tab) {
+    if (tab === 'touch') {
+      if (this._drawerTabTouch) this._drawerTabTouch.classList.add('active');
+      if (this._drawerTabKeyboard) this._drawerTabKeyboard.classList.remove('active');
+      if (this._drawerPanelTouch) this._drawerPanelTouch.classList.remove('hidden');
+      if (this._drawerPanelKeyboard) this._drawerPanelKeyboard.classList.add('hidden');
+    } else {
+      if (this._drawerTabTouch) this._drawerTabTouch.classList.remove('active');
+      if (this._drawerTabKeyboard) this._drawerTabKeyboard.classList.add('active');
+      if (this._drawerPanelTouch) this._drawerPanelTouch.classList.add('hidden');
+      if (this._drawerPanelKeyboard) this._drawerPanelKeyboard.classList.remove('hidden');
+    }
   }
 
   isOpen() {
@@ -205,6 +249,24 @@ export class DrawerController {
       });
     }
 
+    // Restore demo presentation script button
+    if (this._btnRestoreDemo) {
+      this._btnRestoreDemo.addEventListener('click', () => {
+        store.setState({ text: WELCOME_DEMO_SCRIPT });
+        if (this._scriptInput) {
+          this._scriptInput.value = WELCOME_DEMO_SCRIPT;
+          this._updateTextStats(WELCOME_DEMO_SCRIPT);
+        }
+      });
+    }
+
+    // Touch controls toggle
+    if (this._touchControlsToggle) {
+      this._touchControlsToggle.addEventListener('change', (e) => {
+        store.setState({ showTouchControls: e.target.checked });
+      });
+    }
+
     // Theme color presets
     const themePills = document.querySelectorAll('.theme-pill');
     themePills.forEach((pill) => {
@@ -217,6 +279,10 @@ export class DrawerController {
   }
 
   _syncFromStore(state, changedKeys) {
+    if (changedKeys.includes('showTouchControls') && this._touchControlsToggle) {
+      this._touchControlsToggle.checked = !!state.showTouchControls;
+    }
+
     if (changedKeys.includes('countdownDuration') && this._countdownSelect) {
       this._countdownSelect.value = String(state.countdownDuration);
     }
