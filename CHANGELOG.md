@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.0-rc.7] - 2026-09-20
+
+### Fixed
+- **Markdown Cheatsheet Layout & Truncation:** Redesigned the "✨ Markdown Formatting Guide" from a cramped 2-column grid into a clean, legible single-column layout:
+  - Eliminated awkward mid-tag line breaks inside code blocks (e.g. `## Section` and `[Pause 2s]`) with `white-space: nowrap;` and dedicated minimum widths.
+  - Removed ellipsis truncation on longer descriptions (`white-space: normal; overflow: visible;`), allowing explanations like "Stage Direction / Cue (Not spoken aloud)" to be read completely without being cut off.
+  - Added responsive `max-height: 260px` with custom slim scrolling to maintain clean ergonomics on landscape mobile screens.
+  - Refined description wording and improved contrast across cheatsheet items.
+
+---
+
 ## [1.0.0-rc.6] - 2026-09-20
 
 ### Added
