@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **HUD Speaking Pace:** Replaced raw `px/s` in the Heads-Up Display with active WPM and spoken pace indicator (`130 WPM` &bull; `🗣️ Conversational`).
 - **Unmissable Refresh Controls:** Added a direct `🔄 Refresh` button in the Drawer Header and in the Quick Action buttons grid, in addition to the footer button, allowing users to reload and fetch updates immediately without scrolling.
 - **Mobile Pull-to-Refresh & Native Overscroll:** Enabled native browser pull-to-refresh on mobile by setting `overscroll-behavior-y: auto;` and preventing `preventDefault()` on downward swipes at the top of the script.
+- **Mobile-Calibrated 44px Starting Font Size:** On touch and mobile screens (viewport &le; 768px), the initial font size defaults to 44px instead of desktop 48px, preventing oversized text on smartphone screens. Settings reset dynamically restores 44px on mobile and 48px on desktop, while automatically migrating previous 70px/48px caches on mobile devices.
 - **Automatic Live PWA Version Updates:** Added a `controllerchange` lifecycle listener to reload the active page automatically when a newly activated Service Worker takes control.
 
 ### Fixed

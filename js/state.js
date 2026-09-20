@@ -54,6 +54,19 @@ export const DEFAULT_STATE = Object.freeze({
   isCountingDown: false // active countdown status
 });
 
+/**
+ * Checks if the current environment is running on a touch-enabled or small mobile screen device.
+ * @returns {boolean}
+ */
+export function isMobileDevice() {
+  return typeof window !== 'undefined' && Boolean(
+    ('ontouchstart' in window) ||
+    (typeof navigator !== 'undefined' && navigator.maxTouchPoints > 0) ||
+    (typeof window.matchMedia === 'function' && window.matchMedia('(pointer: coarse)').matches) ||
+    (typeof window.innerWidth === 'number' && window.innerWidth <= 768)
+  );
+}
+
 // Non-persisted runtime keys (should always reset to default on launch)
 const TRANSIENT_KEYS = new Set(['isPlaying', 'reverseScroll', 'isCountingDown']);
 
@@ -76,17 +89,21 @@ class StateStore {
     const savedConfig = loadItem(STORAGE_KEYS.CONFIG, {});
     const savedText = loadItem(STORAGE_KEYS.SCRIPT, null);
 
-    // Auto-detect touch capability for initial showTouchControls default
-    const isTouch = typeof window !== 'undefined' && Boolean(
-      ('ontouchstart' in window) ||
-      (typeof navigator !== 'undefined' && navigator.maxTouchPoints > 0) ||
-      (typeof window.matchMedia === 'function' && window.matchMedia('(pointer: coarse)').matches)
-    );
+    const isTouch = isMobileDevice();
+
+    // On mobile screens, starting font size is 44px (desktop default is 48px)
+    const defaultFontSize = isTouch ? 44 : DEFAULT_STATE.fontSize;
+    let resolvedFontSize = savedConfig.fontSize !== undefined ? savedConfig.fontSize : defaultFontSize;
+    if (isTouch && (resolvedFontSize === 70 || resolvedFontSize === 48)) {
+      resolvedFontSize = 44;
+    }
 
     return {
       ...DEFAULT_STATE,
+      fontSize: resolvedFontSize,
       showTouchControls: isTouch,
       ...savedConfig,
+      fontSize: resolvedFontSize,
       ...(savedText !== null ? { text: savedText } : {}),
       // Ensure transient keys always start at default
       isPlaying: false,
@@ -178,9 +195,13 @@ class StateStore {
    * @param {boolean} keepText If true, keeps user script intact
    */
   resetToDefaults(keepText = true) {
+    const isTouch = isMobileDevice();
+    const defaultFontSize = isTouch ? 44 : DEFAULT_STATE.fontSize;
     const currentText = this._state.text;
     const newState = {
       ...DEFAULT_STATE,
+      fontSize: defaultFontSize,
+      showTouchControls: isTouch,
       ...(keepText ? { text: currentText } : {})
     };
     this.setState(newState);

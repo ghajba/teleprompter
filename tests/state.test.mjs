@@ -35,7 +35,7 @@ globalThis.window = {
 };
 
 // Import modules to test
-const { store, DEFAULT_STATE } = await import('../js/state.js');
+const { store, DEFAULT_STATE, isMobileDevice } = await import('../js/state.js');
 const { isStorageAvailable, saveItem, loadItem } = await import('../js/storage.js');
 
 console.log('🧪 Starting tests for StateStore and Storage...');
@@ -93,5 +93,17 @@ assert.equal(store.getState().isCountingDown, true);
 store.setState({ isCountingDown: false });
 assert.equal(store.getState().isCountingDown, false);
 console.log('✓ Countdown state management passed');
+
+// Test 7: Mobile detection and adaptive 44px default font size
+assert.equal(isMobileDevice(), false, 'Default node mock should not be detected as mobile');
+window.innerWidth = 414;
+assert.equal(isMobileDevice(), true, 'Small screen width should be detected as mobile');
+store.resetToDefaults(true);
+assert.equal(store.getState().fontSize, 44, 'Mobile reset should set default font size to 44px');
+assert.equal(store.getState().showTouchControls, true, 'Mobile reset should enable touch controls');
+delete window.innerWidth;
+store.resetToDefaults(true);
+assert.equal(store.getState().fontSize, DEFAULT_STATE.fontSize, 'Desktop reset should set default font size to 48px');
+console.log('✓ Mobile detection and adaptive 44px font size passed');
 
 console.log('🎉 All tests passed successfully!');

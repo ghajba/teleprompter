@@ -24,6 +24,12 @@
   --success: #22c55e;
 }
 
+@media (max-width: 768px) {
+  :root {
+    --font-size: 44px;
+  }
+}
+
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
