@@ -6,6 +6,15 @@
   <title>Teleprompter Web App</title>
   <meta name="description" content="A lightweight, privacy-focused, zero-dependency browser-based teleprompter designed for smooth 60+ FPS scrolling.">
 
+  <!-- PWA & Mobile Capabilities -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+  <meta name="theme-color" content="#090d16">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Teleprompter">
+
   <!-- Core Stylesheets -->
   <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="css/prompter.css">
@@ -71,6 +80,7 @@
           <button id="btnReset" class="btn-ctrl">↺ Reset Top</button>
         </div>
         <button id="btnFullscreen" class="btn-ctrl" style="margin-top: 0.4rem;">⛶ Toggle Fullscreen (F)</button>
+        <button id="btnInstallApp" class="btn-ctrl" style="display: none; margin-top: 0.4rem; border-color: var(--accent); color: var(--accent);">📲 Install App to Device</button>
       </section>
 
       <!-- Section 3: Speed Control -->

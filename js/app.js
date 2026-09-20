@@ -87,5 +87,38 @@ document.addEventListener('DOMContentLoaded', () => {
     applyState(state, changedKeys);
   });
 
+  // PWA Service Worker Registration
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .then((reg) => console.log('[PWA] Service Worker registered with scope:', reg.scope))
+        .catch((err) => console.warn('[PWA] Service Worker registration failed:', err));
+    });
+  }
+
+  // PWA Install Prompt Listener
+  let deferredPrompt = null;
+  const installBtn = document.getElementById('btnInstallApp');
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    if (installBtn) {
+      installBtn.style.display = 'flex';
+      installBtn.addEventListener('click', async () => {
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        console.log('[PWA] User install choice:', outcome);
+        deferredPrompt = null;
+        installBtn.style.display = 'none';
+      });
+    }
+  });
+
+  window.addEventListener('appinstalled', () => {
+    console.log('[PWA] Application successfully installed.');
+    if (installBtn) installBtn.style.display = 'none';
+  });
+
   console.log('🚀 Teleprompter Web App initialized successfully.');
 });

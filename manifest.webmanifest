@@ -1,0 +1,20 @@
+{
+  "name": "Teleprompter Web App",
+  "short_name": "Teleprompter",
+  "description": "Lightweight, zero-dependency offline-first teleprompter with 60+ FPS smooth scrolling",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#090d16",
+  "orientation": "any",
+  "categories": ["productivity", "utilities", "video"],
+  "icons": [
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
