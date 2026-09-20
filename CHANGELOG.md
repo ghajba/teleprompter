@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.0] - 2026-09-20
+
+### General Availability (v1.0 Milestone)
+This marks the official **v1.0.0 General Availability** release of the Teleprompter Web App! A lightweight, 100% offline-first, zero-dependency browser teleprompter engineered for professional creators, presenters, and video production workflows.
+
+#### Core Capabilities & Highlights:
+- **⚡ 60+ FPS Fluid Motion Engine:** Hardware-accelerated sub-pixel scrolling powered by `requestAnimationFrame` and GPU transforms for jitter-free reading.
+- **🗣️ Presenter Reading Speed (WPM):** Presenter pace calibrated in Words Per Minute (`60 - 250 WPM`, default `130 WPM`), real-time speech duration estimates, and qualitative speaking pace indicators.
+- **🔒 100% Offline-First & Private:** Zero third-party trackers, zero server dependencies, and fully functional offline via Service Worker precaching. All scripts stay private in local storage.
+- **📝 Native Zero-Dependency Markdown:** Rich typography rendering for section headings, bold spoken emphasis, tone hints, visual break bars (`---`), and non-spoken stage direction cues (`[Pause 2s]`).
+- **🪞 Physical Glass Mirroring:** Reflection flip mode designed for professional beam-splitter glass teleprompter rigs.
+- **📱 PWA & Adaptive Controls:** Installable Progressive Web App with touch gestures, floating on-screen mobile controls, keyboard shortcuts, and mobile-calibrated font scaling (44px default).
+- **⏱️ Clean Countdown & Eyeline Guide:** Visual reading anchor line, configurable countdown timer with instant tap-to-cancel protection.
+- **🔍 In-App Version Visibility:** Live status badges on canvas watermark, HUD, and settings drawer.
+
+---
+
 ## [1.0.0-rc.7] - 2026-09-20
 
 ### Fixed
