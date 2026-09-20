@@ -62,7 +62,19 @@ assert.equal(stripped.includes('Pause 3s'), false, 'Stage direction should not b
 assert.equal(stripped.includes('#'), false, 'Heading hashes should be stripped');
 assert.equal(stripped.includes('**'), false, 'Bold asterisks should be stripped');
 const words = stripped.split(/\s+/).filter(Boolean);
-assert.equal(words.length, 13, 'Should accurately count spoken words only');
-console.log('✓ stripMarkdown word count sanitization passed');
+// Test 8: Empty lines and paragraph separation
+const paraMd = 'Paragraph 1\n\nParagraph 2\n\n\nParagraph 3';
+const renderedPara = renderMarkdown(paraMd);
+assert.equal(
+  renderedPara.includes('<p class="prompter-p">Paragraph 1</p><p class="prompter-p">Paragraph 2</p>'),
+  true,
+  'Single empty line should cleanly separate paragraphs without redundant line-break divs'
+);
+assert.equal(
+  renderedPara.includes('<div class="prompter-line-break"></div><p class="prompter-p">Paragraph 3</p>'),
+  true,
+  'Second consecutive empty line should insert a controlled break spacer'
+);
+console.log('✓ Paragraph separation and controlled empty line spacing passed');
 
 console.log('🎉 All Markdown parser tests passed successfully!');

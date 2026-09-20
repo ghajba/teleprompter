@@ -64,6 +64,10 @@
   padding: 0;
   box-sizing: border-box;
   word-wrap: break-word;
+  white-space: normal;
+}
+
+.prompter-text-inner.plain-text {
   white-space: pre-wrap;
 }
 
@@ -604,11 +608,12 @@
 }
 
 .prompter-p {
-  margin: 0 0 0.55em 0;
+  margin: 0 0 0.45em 0;
+  line-height: 1.45;
 }
 
 .prompter-line-break {
-  height: 1.2em;
+  height: 0.5em;
 }
 
 /* ==========================================================================

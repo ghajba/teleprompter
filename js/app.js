@@ -36,8 +36,10 @@ document.addEventListener('DOMContentLoaded', () => {
   if (prompterTextInner) {
     const initialText = store.getState().text || '';
     if (store.getState().renderMarkdown) {
+      prompterTextInner.classList.remove('plain-text');
       prompterTextInner.innerHTML = renderMarkdown(initialText);
     } else {
+      prompterTextInner.classList.add('plain-text');
       prompterTextInner.textContent = initialText;
     }
   }
@@ -107,8 +109,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (changedKeys.includes('text') || changedKeys.includes('renderMarkdown')) {
       if (prompterTextInner) {
         if (state.renderMarkdown) {
+          prompterTextInner.classList.remove('plain-text');
           prompterTextInner.innerHTML = renderMarkdown(state.text || '');
         } else {
+          prompterTextInner.classList.add('plain-text');
           prompterTextInner.textContent = state.text || '';
         }
       } else if (prompterText) {
