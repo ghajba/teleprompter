@@ -37,6 +37,7 @@ globalThis.window = {
 // Import modules to test
 const { store, DEFAULT_STATE, isMobileDevice } = await import('../js/state.js');
 const { isStorageAvailable, saveItem, loadItem } = await import('../js/storage.js');
+const { APP_VERSION } = await import('../js/version.js');
 
 console.log('🧪 Starting tests for StateStore and Storage...');
 
@@ -105,5 +106,10 @@ delete window.innerWidth;
 store.resetToDefaults(true);
 assert.equal(store.getState().fontSize, DEFAULT_STATE.fontSize, 'Desktop reset should set default font size to 48px');
 console.log('✓ Mobile detection and adaptive 44px font size passed');
+
+// Test 8: Application version validation
+assert.equal(typeof APP_VERSION, 'string', 'APP_VERSION must be a string');
+assert.match(APP_VERSION, /^v\d+\.\d+\.\d+(-[a-zA-Z0-9.]+)?$/, 'APP_VERSION must match SemVer format (e.g. v1.0.0-rc.6)');
+console.log(`✓ APP_VERSION validation passed (${APP_VERSION})`);
 
 console.log('🎉 All tests passed successfully!');

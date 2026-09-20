@@ -9,6 +9,7 @@ import { ControlsManager } from './controls.js';
 import { DrawerController } from './ui/drawer.js';
 import { WelcomeModalController } from './ui/welcome.js';
 import { renderMarkdown } from './markdown.js';
+import { APP_VERSION } from './version.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   const prompterContainer = document.getElementById('prompterContainer');
@@ -20,6 +21,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const hudStatus = document.getElementById('hudStatus');
   const hudTime = document.getElementById('hudTime');
   const hudWpm = document.getElementById('hudWpm');
+  const appVersionWatermark = document.getElementById('appVersionWatermark');
+
+  // Dynamic version stamping across all version badges
+  document.querySelectorAll('.app-version-text').forEach((el) => {
+    el.textContent = APP_VERSION;
+  });
 
   const readingProgressBar = document.getElementById('readingProgressBar');
   const countdownOverlay = document.getElementById('countdownOverlay');
@@ -148,6 +155,9 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       if (touchControls) {
         touchControls.classList.toggle('autohide', state.isPlaying);
+      }
+      if (appVersionWatermark) {
+        appVersionWatermark.classList.toggle('autohide', state.isPlaying);
       }
     }
   }

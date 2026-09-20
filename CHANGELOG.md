@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.0-rc.6] - 2026-09-20
+
+### Added
+- **Global In-App Version Visibility:** Displayed active application version (`v1.0.0-rc.6`) prominently across the interface so users can instantly verify after updates or page reloads that the latest build has loaded:
+  - **Canvas Watermark:** Subtle, non-intrusive status pill in the bottom-left corner with live status dot (`🟢 v1.0.0-rc.6`), automatically dimming during teleprompter playback to prevent distraction during filming.
+  - **Heads-Up Display (HUD):** Version badge in the top-left status bar next to reading pace metrics.
+  - **Settings Drawer Header:** Version pill positioned directly next to the drawer title and `🔄 Refresh` button.
+  - **Settings Drawer Footer:** Version tag linking to latest release notes.
+  - **Welcome Modal Badge:** Displays version in the onboarding header badge.
+- **Single Source of Truth (`js/version.js`):** Exported `APP_VERSION` constant dynamically stamping all `.app-version-text` elements in the DOM, with automated SemVer test verification.
+
+---
+
 ## [1.0.0-rc.5] - 2026-09-20
 
 ### Added
