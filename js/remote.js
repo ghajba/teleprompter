@@ -212,10 +212,8 @@ export class RemoteHostController {
       const url = new URL(window.location.href);
       const cleanPath = url.pathname.replace(/\/index\.html$/, '').replace(/\/$/, '');
 
-      // On localhost (e.g. npx serve), /remote avoids 301 Moved Permanently redirects.
-      // On static web hosts (e.g. GitHub Pages), /remote.html is the physical file.
-      const isLocal = url.hostname === 'localhost' || url.hostname === '127.0.0.1';
-      const targetPath = isLocal ? '/remote' : '/remote.html';
+      // Target the physical /remote.html file for 100% compatibility across static servers and GitHub Pages
+      const targetPath = '/remote.html';
 
       if (forMobile) {
         const customHost = (this._hostInputEl ? this._hostInputEl.value.trim() : '') ||
