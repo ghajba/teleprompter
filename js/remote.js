@@ -81,6 +81,8 @@ export class RemoteHostController {
     this._hostSectionEl = null;
     this._autoDetectBadgeEl = null;
     this._lastBroadcastState = null;
+    this._seenMsgIds = new Set();
+    this._lastToggleTime = 0;
   }
 
   /**
@@ -395,26 +397,32 @@ export class RemoteHostController {
     this._lastBroadcastState = serialized;
 
     const message = {
+      id: `${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
       type: 'PROMPTER_STATE',
       state: payload,
       timestamp: Date.now()
     };
 
+    let sentViaChannel = false;
     if (this._channel) {
       try {
         this._channel.postMessage(message);
+        sentViaChannel = true;
       } catch {
         // Channel may be closed
       }
     }
 
-    try {
-      localStorage.setItem(
-        REMOTE_STORAGE_KEY,
-        JSON.stringify({ sender: 'host', payload: message, ts: Date.now() })
-      );
-    } catch {
-      // Storage exceptions ignored
+    // Only fallback to LocalStorage if BroadcastChannel was unavailable
+    if (!sentViaChannel) {
+      try {
+        localStorage.setItem(
+          REMOTE_STORAGE_KEY,
+          JSON.stringify({ sender: 'host', payload: message, ts: Date.now() })
+        );
+      } catch {
+        // Storage exceptions ignored
+      }
     }
   }
 
@@ -426,6 +434,16 @@ export class RemoteHostController {
   _handleRemoteMessage(message) {
     if (!message || typeof message !== 'object') return;
 
+    // Deduplicate incoming messages
+    if (message.id) {
+      if (this._seenMsgIds.has(message.id)) return;
+      this._seenMsgIds.add(message.id);
+      if (this._seenMsgIds.size > 50) {
+        const [oldest] = this._seenMsgIds;
+        this._seenMsgIds.delete(oldest);
+      }
+    }
+
     if (message.type === 'REMOTE_REQUEST_STATE') {
       this._lastBroadcastState = null;
       this.broadcastState();
@@ -434,6 +452,16 @@ export class RemoteHostController {
 
     if (message.type === 'REMOTE_COMMAND') {
       const { action, value } = message;
+
+      // Debounce rapid toggle clicks (within 180ms)
+      if (action === 'toggle') {
+        const now = Date.now();
+        if (now - this._lastToggleTime < 180) {
+          return;
+        }
+        this._lastToggleTime = now;
+      }
+
       switch (action) {
         case 'play':
           scroller.play();
@@ -464,6 +492,11 @@ export class RemoteHostController {
         case 'rewind': {
           const cur = scroller.getScrollY();
           scroller.setScrollY(Math.max(0, cur - 160));
+          break;
+        }
+        case 'forward': {
+          const cur = scroller.getScrollY();
+          scroller.setScrollY(cur + 160);
           break;
         }
         case 'reset':

@@ -26,6 +26,7 @@ const validCommands = [
   { type: 'REMOTE_COMMAND', action: 'speed_delta', value: 5 },
   { type: 'REMOTE_COMMAND', action: 'speed_delta', value: -5 },
   { type: 'REMOTE_COMMAND', action: 'rewind' },
+  { type: 'REMOTE_COMMAND', action: 'forward' },
   { type: 'REMOTE_COMMAND', action: 'reset' },
   { type: 'REMOTE_COMMAND', action: 'toggle_reverse' },
   { type: 'REMOTE_REQUEST_STATE' }

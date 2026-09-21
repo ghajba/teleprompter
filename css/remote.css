@@ -244,17 +244,17 @@ body {
 /* Navigation & Secondary Controls */
 .remote-nav-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 0.75rem;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
 }
 
 .btn-nav-action {
-  padding: 0.9rem 0.5rem;
+  padding: 0.85rem 0.35rem;
   background: rgba(255, 255, 255, 0.07);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 1rem;
   color: var(--remote-text);
-  font-size: 0.82rem;
+  font-size: 0.76rem;
   font-weight: 600;
   display: flex;
   flex-direction: column;

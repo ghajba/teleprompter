@@ -37,8 +37,10 @@ export class RemoteClientController {
     this._timeRemaining = document.getElementById('remoteTimeRemaining');
     this._timeTotal = document.getElementById('remoteTimeTotal');
     this._btnRewind = document.getElementById('btnRemoteRewind');
+    this._btnForward = document.getElementById('btnRemoteForward');
     this._btnReset = document.getElementById('btnRemoteReset');
     this._btnReverse = document.getElementById('btnRemoteReverse');
+    this._seenMsgIds = new Set();
   }
 
   init() {
@@ -123,6 +125,13 @@ export class RemoteClientController {
       });
     }
 
+    if (this._btnForward) {
+      this._btnForward.addEventListener('click', () => {
+        triggerHaptic();
+        this.sendCommand('forward');
+      });
+    }
+
     if (this._btnReset) {
       this._btnReset.addEventListener('click', () => {
         triggerHaptic();
@@ -159,11 +168,16 @@ export class RemoteClientController {
   }
 
   _postMessage(message) {
+    message.id = `${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    message.timestamp = Date.now();
+
+    // Prefer BroadcastChannel when available, avoiding duplicate LocalStorage events
     if (this._channel) {
       try {
         this._channel.postMessage(message);
+        return;
       } catch {
-        // BroadcastChannel error
+        // Channel error, fall back to LocalStorage below
       }
     }
 
@@ -179,6 +193,15 @@ export class RemoteClientController {
 
   _handleMessage(message) {
     if (!message || typeof message !== 'object') return;
+
+    if (message.id) {
+      if (this._seenMsgIds.has(message.id)) return;
+      this._seenMsgIds.add(message.id);
+      if (this._seenMsgIds.size > 50) {
+        const [oldest] = this._seenMsgIds;
+        this._seenMsgIds.delete(oldest);
+      }
+    }
 
     if (message.type === 'PROMPTER_STATE' && message.state) {
       this._isConnected = true;
