@@ -73,9 +73,15 @@ assert.equal(typeof QRCode, 'function', 'QRCode constructor must be a function')
 console.log('✓ Pure JS QR Code generator loaded in strict mode without runtime exceptions');
 
 // Test 5: Remote host controller methods
-const { remoteHost } = await import('../js/remote.js');
+const { remoteHost, detectLocalIP } = await import('../js/remote.js');
 assert.equal(typeof remoteHost.getRemoteUrl, 'function');
 assert.ok(remoteHost.getRemoteUrl().includes('remote.html'));
 console.log('✓ Remote host URL resolution verified');
+
+// Test 6: WebRTC local IP auto-detection export & headless fallback
+assert.equal(typeof detectLocalIP, 'function', 'detectLocalIP must be exported as a function');
+const detected = await detectLocalIP();
+assert.equal(detected, null, 'detectLocalIP should resolve null gracefully in Node.js headless environment');
+console.log('✓ Zero-dependency WebRTC IP sniffer headless fallback verified');
 
 console.log('🎉 All Remote Control protocol tests passed successfully!');

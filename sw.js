@@ -3,7 +3,7 @@
  * Strategy: Cache-First with Network Fallback and Offline Pre-caching.
  */
 
-const CACHE_NAME = 'teleprompter-v1.1.0';
+const CACHE_NAME = 'teleprompter-v1.1.1';
 
 const PRECACHE_ASSETS = [
   './',
@@ -70,22 +70,48 @@ self.addEventListener('fetch', (event) => {
 
   event.respondWith(
     (async () => {
+      // Helper to strip the redirected flag from responses.
+      // Chromium strictly aborts navigation requests with ERR_FAILED if respondWith resolves with response.redirected === true.
+      const sanitizeResponse = async (res) => {
+        if (!res || !res.redirected) return res;
+        const body = await res.blob();
+        return new Response(body, {
+          status: res.status || 200,
+          statusText: res.statusText || 'OK',
+          headers: res.headers
+        });
+      };
+
       // 1. Direct cache match
       const cached = await caches.match(event.request);
       if (cached) {
-        return cached;
+        return sanitizeResponse(cached);
       }
 
       // 2. Clean URL mapping for /remote or /remote.html
       const cleanPath = url.pathname.replace(/\/index\.html$/, '').replace(/\/$/, '');
       if (cleanPath.endsWith('/remote') || cleanPath.endsWith('/remote.html')) {
-        const remoteCached = await caches.match('./remote.html') || await caches.match('/remote.html');
-        if (remoteCached) return remoteCached;
+        const cache = await caches.open(CACHE_NAME);
+        const remoteCached = await cache.match('./remote.html') ||
+                             await cache.match('remote.html') ||
+                             await caches.match('./remote.html') ||
+                             await caches.match('/remote.html');
+        if (remoteCached) {
+          return sanitizeResponse(remoteCached);
+        }
       }
 
       // 3. Network fetch with dynamic caching
       try {
-        const networkResponse = await fetch(event.request);
+        let networkResponse = await fetch(event.request);
+
+        // If server sent a redirect (e.g. 301 from /remote.html to /remote),
+        // fetch follows it, resulting in networkResponse.redirected === true.
+        // Sanitize it before caching or returning to respondWith.
+        if (networkResponse && networkResponse.redirected) {
+          networkResponse = await sanitizeResponse(networkResponse);
+        }
+
         if (networkResponse && networkResponse.status === 200) {
           const cache = await caches.open(CACHE_NAME);
           cache.put(event.request, networkResponse.clone());
@@ -96,10 +122,14 @@ self.addEventListener('fetch', (event) => {
         if (event.request.mode === 'navigate') {
           if (url.pathname.includes('remote')) {
             const remoteFallback = await caches.match('./remote.html') || await caches.match('/remote.html');
-            if (remoteFallback) return remoteFallback;
+            if (remoteFallback) {
+              return sanitizeResponse(remoteFallback);
+            }
           }
           const indexFallback = await caches.match('./index.html') || await caches.match('/');
-          if (indexFallback) return indexFallback;
+          if (indexFallback) {
+            return sanitizeResponse(indexFallback);
+          }
         }
 
         return new Response('Offline - network request failed', {

@@ -499,18 +499,21 @@
           Scan this QR code with your smartphone camera to open the wireless pocket controller.
         </p>
       </div>
-      <div style="margin-bottom: 0.85rem; width: 100%; max-width: 320px; margin-left: auto; margin-right: auto;">
+      <div id="remoteHostConfigSection" style="margin-bottom: 0.85rem; width: 100%; max-width: 320px; margin-left: auto; margin-right: auto;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
           <label for="remoteHostInput" style="font-size: 0.78rem; font-weight: 600; color: var(--drawer-muted);">
             🌐 Smartphone Wi-Fi Host IP:
           </label>
-          <button type="button" id="btnResetRemoteHost" style="background: none; border: none; font-size: 0.72rem; color: var(--accent); cursor: pointer; text-decoration: underline; padding: 0;">
-            Use localhost
-          </button>
+          <div style="display: flex; gap: 0.45rem; align-items: center;">
+            <span id="remoteAutoDetectBadge" style="display: none; font-size: 0.7rem; color: var(--accent);"></span>
+            <button type="button" id="btnResetRemoteHost" style="background: none; border: none; font-size: 0.72rem; color: var(--accent); cursor: pointer; text-decoration: underline; padding: 0;">
+              Reset
+            </button>
+          </div>
         </div>
         <input type="text" id="remoteHostInput" class="select-input" placeholder="e.g. 192.168.1.50" style="font-size: 0.82rem; padding: 0.35rem 0.65rem;" autocomplete="off" spellcheck="false">
         <p style="font-size: 0.72rem; color: var(--drawer-muted); margin-top: 0.3rem; line-height: 1.3;">
-          💡 Phones on Wi-Fi cannot reach <code>localhost</code>. Enter your PC's LAN IP (e.g. <code>192.168.x.x</code>) so your phone can connect.
+          💡 In production (ghajba.github.io), phones connect automatically without IP configuration. For local testing, your phone connects via your PC's LAN Wi-Fi IP (e.g. <code>192.168.x.x</code>).
         </p>
       </div>
       <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0.5rem 0 1rem;">

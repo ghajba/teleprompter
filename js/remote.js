@@ -12,6 +12,55 @@ export const REMOTE_CHANNEL_NAME = 'teleprompter_remote_channel';
 export const REMOTE_STORAGE_KEY = 'teleprompter_remote_bus';
 
 /**
+ * Automatically discovers local LAN/Wi-Fi IPv4 address using WebRTC ICE candidate sniffing.
+ * Zero external servers, zero dependencies.
+ * @returns {Promise<string|null>}
+ */
+export async function detectLocalIP() {
+  if (typeof window === 'undefined' || typeof RTCPeerConnection === 'undefined') {
+    return null;
+  }
+
+  return new Promise((resolve) => {
+    try {
+      const pc = new RTCPeerConnection({ iceServers: [] });
+      let resolved = false;
+
+      const finish = (ip) => {
+        if (!resolved) {
+          resolved = true;
+          try {
+            pc.close();
+          } catch {}
+          resolve(ip);
+        }
+      };
+
+      // 1.2 second timeout safety net
+      const timer = setTimeout(() => finish(null), 1200);
+
+      pc.createDataChannel('detect-ip');
+      pc.createOffer()
+        .then((offer) => pc.setLocalDescription(offer))
+        .catch(() => finish(null));
+
+      pc.onicecandidate = (event) => {
+        if (!event || !event.candidate || !event.candidate.candidate) return;
+        const cand = event.candidate.candidate;
+        // Search for private IPv4: 192.168.x.x, 10.x.x.x, 172.16-31.x.x
+        const match = cand.match(/(192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.(?:1[6-9]|2\d|3[0-1])\.\d+\.\d+)/);
+        if (match && match[1]) {
+          clearTimeout(timer);
+          finish(match[1]);
+        }
+      };
+    } catch {
+      resolve(null);
+    }
+  });
+}
+
+/**
  * Host Controller (Prompter side):
  * Receives remote commands and broadcasts live playback state.
  */
@@ -27,6 +76,10 @@ export class RemoteHostController {
     this._openWindowBtnEl = null;
     this._showQrBtnEl = null;
     this._launchTabBtnEl = null;
+    this._hostInputEl = null;
+    this._resetHostBtnEl = null;
+    this._hostSectionEl = null;
+    this._autoDetectBadgeEl = null;
     this._lastBroadcastState = null;
   }
 
@@ -45,6 +98,8 @@ export class RemoteHostController {
     this._launchTabBtnEl = document.getElementById('btnLaunchRemoteTab');
     this._hostInputEl = document.getElementById('remoteHostInput');
     this._resetHostBtnEl = document.getElementById('btnResetRemoteHost');
+    this._hostSectionEl = document.getElementById('remoteHostConfigSection');
+    this._autoDetectBadgeEl = document.getElementById('remoteAutoDetectBadge');
 
     // Setup BroadcastChannel
     if (typeof BroadcastChannel !== 'undefined') {
@@ -109,6 +164,9 @@ export class RemoteHostController {
         if (this._hostInputEl) {
           this._hostInputEl.value = '';
         }
+        if (this._autoDetectBadgeEl) {
+          this._autoDetectBadgeEl.style.display = 'none';
+        }
         this.updatePairingView();
       });
     }
@@ -152,6 +210,11 @@ export class RemoteHostController {
       const url = new URL(window.location.href);
       const cleanPath = url.pathname.replace(/\/index\.html$/, '').replace(/\/$/, '');
 
+      // On localhost (e.g. npx serve), /remote avoids 301 Moved Permanently redirects.
+      // On static web hosts (e.g. GitHub Pages), /remote.html is the physical file.
+      const isLocal = url.hostname === 'localhost' || url.hostname === '127.0.0.1';
+      const targetPath = isLocal ? '/remote' : '/remote.html';
+
       if (forMobile) {
         const customHost = (this._hostInputEl ? this._hostInputEl.value.trim() : '') ||
           localStorage.getItem('teleprompter_custom_remote_host');
@@ -160,11 +223,11 @@ export class RemoteHostController {
           const hostWithoutProto = customHost.replace(/^https?:\/\//i, '').replace(/\/.*$/, '');
           const hasPort = hostWithoutProto.includes(':');
           const portPart = (!hasPort && url.port) ? `:${url.port}` : '';
-          return `${url.protocol}//${hostWithoutProto}${portPart}${cleanPath}/remote.html`;
+          return `${url.protocol}//${hostWithoutProto}${portPart}${cleanPath}${targetPath}`;
         }
       }
 
-      return `${url.origin}${cleanPath}/remote.html`;
+      return `${url.origin}${cleanPath}${targetPath}`;
     } catch {
       const base = window.location.href.replace(/index\.html$/, '').replace(/\/$/, '');
       return `${base}/remote.html`;
@@ -174,13 +237,61 @@ export class RemoteHostController {
   /**
    * Opens the remote pairing QR modal.
    */
-  openModal() {
+  async openModal() {
     if (!this._modalEl) return;
     this._modalEl.classList.remove('hidden');
+
+    let isLocal = false;
+    if (typeof window !== 'undefined') {
+      try {
+        const url = new URL(window.location.href);
+        isLocal = url.hostname === 'localhost' || url.hostname === '127.0.0.1';
+      } catch {}
+    }
+
+    // In production (GitHub Pages), hide host IP setup since phone accesses public domain directly
+    if (this._hostSectionEl) {
+      if (isLocal) {
+        this._hostSectionEl.classList.remove('hidden');
+      } else {
+        this._hostSectionEl.classList.add('hidden');
+      }
+    }
 
     const saved = localStorage.getItem('teleprompter_custom_remote_host') || '';
     if (this._hostInputEl) {
       this._hostInputEl.value = saved;
+    }
+
+    // If on localhost and no saved custom host, attempt zero-dependency WebRTC auto-detection
+    if (isLocal && !saved) {
+      if (this._autoDetectBadgeEl) {
+        this._autoDetectBadgeEl.textContent = '🔍 Detecting Wi-Fi IP...';
+        this._autoDetectBadgeEl.style.color = 'var(--accent)';
+        this._autoDetectBadgeEl.style.display = 'inline-block';
+      }
+
+      detectLocalIP().then((detected) => {
+        if (detected && !localStorage.getItem('teleprompter_custom_remote_host')) {
+          if (this._hostInputEl) {
+            this._hostInputEl.value = detected;
+          }
+          if (this._autoDetectBadgeEl) {
+            this._autoDetectBadgeEl.textContent = `✓ Detected: ${detected}`;
+            this._autoDetectBadgeEl.style.color = '#22c55e';
+            this._autoDetectBadgeEl.style.display = 'inline-block';
+          }
+          this.updatePairingView();
+        } else if (this._autoDetectBadgeEl && !detected) {
+          this._autoDetectBadgeEl.style.display = 'none';
+        }
+      }).catch(() => {
+        if (this._autoDetectBadgeEl) {
+          this._autoDetectBadgeEl.style.display = 'none';
+        }
+      });
+    } else if (this._autoDetectBadgeEl) {
+      this._autoDetectBadgeEl.style.display = 'none';
     }
 
     this.updatePairingView();
