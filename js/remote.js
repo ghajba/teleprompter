@@ -43,6 +43,8 @@ export class RemoteHostController {
     this._openWindowBtnEl = document.getElementById('btnOpenRemoteWindow');
     this._showQrBtnEl = document.getElementById('btnShowRemoteQR');
     this._launchTabBtnEl = document.getElementById('btnLaunchRemoteTab');
+    this._hostInputEl = document.getElementById('remoteHostInput');
+    this._resetHostBtnEl = document.getElementById('btnResetRemoteHost');
 
     // Setup BroadcastChannel
     if (typeof BroadcastChannel !== 'undefined') {
@@ -82,11 +84,33 @@ export class RemoteHostController {
     }
     if (this._launchTabBtnEl) {
       this._launchTabBtnEl.addEventListener('click', () => {
-        window.open(this.getRemoteUrl(), '_blank');
+        window.open(this.getRemoteUrl(false), '_blank');
       });
     }
     if (this._copyBtnEl) {
       this._copyBtnEl.addEventListener('click', () => this.copyPairingUrl());
+    }
+
+    if (this._hostInputEl) {
+      this._hostInputEl.addEventListener('input', () => {
+        const custom = this._hostInputEl.value.trim();
+        if (custom) {
+          localStorage.setItem('teleprompter_custom_remote_host', custom);
+        } else {
+          localStorage.removeItem('teleprompter_custom_remote_host');
+        }
+        this.updatePairingView();
+      });
+    }
+
+    if (this._resetHostBtnEl) {
+      this._resetHostBtnEl.addEventListener('click', () => {
+        localStorage.removeItem('teleprompter_custom_remote_host');
+        if (this._hostInputEl) {
+          this._hostInputEl.value = '';
+        }
+        this.updatePairingView();
+      });
     }
 
     if (this._modalEl) {
@@ -119,14 +143,28 @@ export class RemoteHostController {
 
   /**
    * Computes the URL for the remote controller.
+   * @param {boolean} forMobile If true, resolves custom Wi-Fi host for phone pairing
    * @returns {string}
    */
-  getRemoteUrl() {
+  getRemoteUrl(forMobile = false) {
     if (typeof window === 'undefined') return './remote.html';
     try {
       const url = new URL(window.location.href);
-      const path = url.pathname.replace(/\/index\.html$/, '').replace(/\/$/, '');
-      return `${url.origin}${path}/remote.html`;
+      const cleanPath = url.pathname.replace(/\/index\.html$/, '').replace(/\/$/, '');
+
+      if (forMobile) {
+        const customHost = (this._hostInputEl ? this._hostInputEl.value.trim() : '') ||
+          localStorage.getItem('teleprompter_custom_remote_host');
+
+        if (customHost) {
+          const hostWithoutProto = customHost.replace(/^https?:\/\//i, '').replace(/\/.*$/, '');
+          const hasPort = hostWithoutProto.includes(':');
+          const portPart = (!hasPort && url.port) ? `:${url.port}` : '';
+          return `${url.protocol}//${hostWithoutProto}${portPart}${cleanPath}/remote.html`;
+        }
+      }
+
+      return `${url.origin}${cleanPath}/remote.html`;
     } catch {
       const base = window.location.href.replace(/index\.html$/, '').replace(/\/$/, '');
       return `${base}/remote.html`;
@@ -140,15 +178,27 @@ export class RemoteHostController {
     if (!this._modalEl) return;
     this._modalEl.classList.remove('hidden');
 
-    const url = this.getRemoteUrl();
+    const saved = localStorage.getItem('teleprompter_custom_remote_host') || '';
+    if (this._hostInputEl) {
+      this._hostInputEl.value = saved;
+    }
+
+    this.updatePairingView();
+  }
+
+  /**
+   * Updates pairing URL input and redraws QR code.
+   */
+  updatePairingView() {
+    const mobileUrl = this.getRemoteUrl(true);
     if (this._urlInputEl) {
-      this._urlInputEl.value = url;
+      this._urlInputEl.value = mobileUrl;
     }
 
     if (this._qrContainerEl) {
       this._qrContainerEl.innerHTML = '';
       try {
-        renderQRCode(this._qrContainerEl, url, {
+        renderQRCode(this._qrContainerEl, mobileUrl, {
           width: 200,
           height: 200,
           colorDark: '#000000',

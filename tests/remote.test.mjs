@@ -72,4 +72,10 @@ assert.equal(typeof renderQRCode, 'function', 'renderQRCode must be a function')
 assert.equal(typeof QRCode, 'function', 'QRCode constructor must be a function');
 console.log('✓ Pure JS QR Code generator loaded in strict mode without runtime exceptions');
 
+// Test 5: Remote host controller methods
+const { remoteHost } = await import('../js/remote.js');
+assert.equal(typeof remoteHost.getRemoteUrl, 'function');
+assert.ok(remoteHost.getRemoteUrl().includes('remote.html'));
+console.log('✓ Remote host URL resolution verified');
+
 console.log('🎉 All Remote Control protocol tests passed successfully!');

@@ -1,9 +1,9 @@
 /**
  * Teleprompter Service Worker
- * Strategy: Cache-First for ultra-fast load and 100% offline-first reliability.
+ * Strategy: Cache-First with Network Fallback and Offline Pre-caching.
  */
 
-const CACHE_NAME = 'teleprompter-v1.0.1';
+const CACHE_NAME = 'teleprompter-v1.1.0';
 
 const PRECACHE_ASSETS = [
   './',
@@ -35,7 +35,7 @@ const PRECACHE_ASSETS = [
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[SW] Pre-caching offline application shell');
+      console.log('[SW] Pre-caching offline application shell:', CACHE_NAME);
       return cache.addAll(PRECACHE_ASSETS);
     }).then(() => {
       return self.skipWaiting();
@@ -61,40 +61,53 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Fetch Event: Cache-First with Network Fallback
+// Fetch Event: Cache-First with robust Clean URL support & offline fallback
 self.addEventListener('fetch', (event) => {
-  // Only handle GET requests
   if (event.request.method !== 'GET') return;
 
   const url = new URL(event.request.url);
-
-  // Avoid intercepting browser extension or non-http requests
   if (!url.protocol.startsWith('http')) return;
 
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse;
+    (async () => {
+      // 1. Direct cache match
+      const cached = await caches.match(event.request);
+      if (cached) {
+        return cached;
       }
 
-      // If not in cache, fetch from network and dynamically cache
-      return fetch(event.request).then((networkResponse) => {
-        if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
-          return networkResponse;
+      // 2. Clean URL mapping for /remote or /remote.html
+      const cleanPath = url.pathname.replace(/\/index\.html$/, '').replace(/\/$/, '');
+      if (cleanPath.endsWith('/remote') || cleanPath.endsWith('/remote.html')) {
+        const remoteCached = await caches.match('./remote.html') || await caches.match('/remote.html');
+        if (remoteCached) return remoteCached;
+      }
+
+      // 3. Network fetch with dynamic caching
+      try {
+        const networkResponse = await fetch(event.request);
+        if (networkResponse && networkResponse.status === 200) {
+          const cache = await caches.open(CACHE_NAME);
+          cache.put(event.request, networkResponse.clone());
         }
-
-        const responseToCache = networkResponse.clone();
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, responseToCache);
-        });
-
         return networkResponse;
-      }).catch(() => {
-        // Fallback for document navigation if offline
+      } catch (err) {
+        // 4. Offline navigation fallback
         if (event.request.mode === 'navigate') {
-          return caches.match('./index.html');
+          if (url.pathname.includes('remote')) {
+            const remoteFallback = await caches.match('./remote.html') || await caches.match('/remote.html');
+            if (remoteFallback) return remoteFallback;
+          }
+          const indexFallback = await caches.match('./index.html') || await caches.match('/');
+          if (indexFallback) return indexFallback;
         }
-      });
-    })
+
+        return new Response('Offline - network request failed', {
+          status: 503,
+          statusText: 'Service Unavailable',
+          headers: { 'Content-Type': 'text/plain' }
+        });
+      }
+    })()
   );
 });
