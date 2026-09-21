@@ -97,6 +97,12 @@ export class RemoteHostController {
       });
     }
 
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && this._modalEl && !this._modalEl.classList.contains('hidden')) {
+        this.closeModal();
+      }
+    });
+
     // Broadcast state updates on every state change
     store.subscribe((state, changedKeys) => {
       const watched = ['isPlaying', 'wpm', 'reverseScroll', 'isCountingDown'];
@@ -117,8 +123,14 @@ export class RemoteHostController {
    */
   getRemoteUrl() {
     if (typeof window === 'undefined') return './remote.html';
-    const base = window.location.href.replace(/index\.html$/, '').replace(/\/$/, '');
-    return `${base}/remote.html`;
+    try {
+      const url = new URL(window.location.href);
+      const path = url.pathname.replace(/\/index\.html$/, '').replace(/\/$/, '');
+      return `${url.origin}${path}/remote.html`;
+    } catch {
+      const base = window.location.href.replace(/index\.html$/, '').replace(/\/$/, '');
+      return `${base}/remote.html`;
+    }
   }
 
   /**
@@ -135,12 +147,16 @@ export class RemoteHostController {
 
     if (this._qrContainerEl) {
       this._qrContainerEl.innerHTML = '';
-      renderQRCode(this._qrContainerEl, url, {
-        width: 200,
-        height: 200,
-        colorDark: '#000000',
-        colorLight: '#ffffff'
-      });
+      try {
+        renderQRCode(this._qrContainerEl, url, {
+          width: 200,
+          height: 200,
+          colorDark: '#000000',
+          colorLight: '#ffffff'
+        });
+      } catch (err) {
+        console.error('[RemoteHost] Error rendering QR code:', err);
+      }
     }
   }
 

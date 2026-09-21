@@ -702,6 +702,7 @@ kbd {
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
+  display: none !important;
 }
 
 .welcome-modal {

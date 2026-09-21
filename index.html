@@ -484,16 +484,22 @@
   </aside>
 
   <!-- Remote Pairing Modal -->
-  <div id="remoteModal" class="welcome-modal-backdrop hidden" aria-hidden="true">
-    <div class="welcome-modal-card" style="max-width: 440px;">
-      <button type="button" id="btnCloseRemoteModal" class="welcome-modal-close" aria-label="Close remote pairing">&times;</button>
-      <div class="welcome-modal-header" style="text-align: center;">
-        <h3 style="margin: 0; font-size: 1.35rem; font-weight: 700;">📱 Mobile Remote Control</h3>
-        <p style="margin: 0.35rem 0 0 0; font-size: 0.88rem; color: var(--drawer-muted);">
+  <div id="remoteModal" class="welcome-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="remoteTitle">
+    <div class="welcome-modal" style="max-width: 440px;">
+      <div class="welcome-header">
+        <div class="welcome-badge">
+          <span class="welcome-badge-dot"></span>
+          <span>Remote Controller</span>
+        </div>
+        <button type="button" id="btnCloseRemoteModal" class="welcome-close-btn" aria-label="Close remote pairing">&times;</button>
+      </div>
+      <div style="text-align: center; margin-bottom: 0.85rem;">
+        <h3 id="remoteTitle" style="margin: 0 0 0.35rem 0; font-size: 1.35rem; font-weight: 700; color: #ffffff;">📱 Mobile Remote Control</h3>
+        <p style="margin: 0; font-size: 0.88rem; color: var(--drawer-muted); line-height: 1.4;">
           Scan this QR code with your smartphone camera to open the wireless pocket controller.
         </p>
       </div>
-      <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.25rem 0;">
+      <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0.5rem 0 1rem;">
         <div id="remoteQrCode" style="background: #ffffff; padding: 0.85rem; border-radius: 0.75rem; box-shadow: 0 0 24px rgba(0, 0, 0, 0.6); display: flex; align-items: center; justify-content: center; min-width: 200px; min-height: 200px;"></div>
         <div style="margin-top: 1rem; display: flex; gap: 0.5rem; width: 100%; max-width: 320px;">
           <input type="text" id="remotePairingUrl" readonly class="select-input" style="font-size: 0.8rem; text-overflow: ellipsis;">
@@ -501,8 +507,8 @@
         </div>
         <span id="remoteCopyFeedback" style="font-size: 0.78rem; color: var(--accent); margin-top: 0.35rem; display: none;">Copied to clipboard!</span>
       </div>
-      <div class="modal-actions" style="margin-top: 0.5rem; justify-content: center;">
-        <button type="button" id="btnLaunchRemoteTab" class="btn-ctrl" style="border-color: var(--accent); color: var(--accent);">
+      <div class="modal-actions" style="margin-top: 0.5rem; display: flex; justify-content: center;">
+        <button type="button" id="btnLaunchRemoteTab" class="btn-ctrl" style="border-color: var(--accent); color: var(--accent); width: 100%;">
           🔗 Open Remote in New Tab
         </button>
       </div>

@@ -66,4 +66,10 @@ assert.equal(roundtrip.state.progressPercent, 42);
 assert.equal(roundtrip.state.remainingFormatted, '01:35');
 console.log('✓ Host state sync roundtrip verified');
 
+// Test 4: QR Code module evaluation & strict-mode integrity
+const { renderQRCode, QRCode } = await import('../js/qrcode.js');
+assert.equal(typeof renderQRCode, 'function', 'renderQRCode must be a function');
+assert.equal(typeof QRCode, 'function', 'QRCode constructor must be a function');
+console.log('✓ Pure JS QR Code generator loaded in strict mode without runtime exceptions');
+
 console.log('🎉 All Remote Control protocol tests passed successfully!');
