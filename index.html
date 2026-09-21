@@ -498,6 +498,15 @@
         <p style="margin: 0; font-size: 0.88rem; color: var(--drawer-muted); line-height: 1.4;">
           Scan this QR code with your smartphone camera to open the wireless pocket controller.
         </p>
+        <div style="display: flex; align-items: center; justify-content: center; gap: 0.45rem; margin-top: 0.5rem; font-size: 0.76rem;">
+          <span style="color: var(--drawer-muted);">Session:</span>
+          <code id="remoteSessionBadge" style="background: rgba(255, 255, 255, 0.08); padding: 0.15rem 0.5rem; border-radius: 4px; font-family: monospace; color: var(--accent); font-size: 0.76rem;">tp_...</code>
+          <button type="button" id="btnNewSession" title="Generate new pairing session" style="background: none; border: none; font-size: 0.72rem; color: var(--accent); cursor: pointer; text-decoration: underline; padding: 0;">↺ New</button>
+        </div>
+        <div id="remotePeerStatus" style="display: none; align-items: center; justify-content: center; gap: 0.4rem; margin-top: 0.5rem; font-size: 0.8rem; color: #22c55e; font-weight: 600;">
+          <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 8px #22c55e;"></span>
+          <span>📱 Smartphone Connected</span>
+        </div>
       </div>
       <div id="remoteHostConfigSection" style="margin-bottom: 0.85rem; width: 100%; max-width: 320px; margin-left: auto; margin-right: auto;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">

@@ -3,12 +3,14 @@
  * Communicates via BroadcastChannel and LocalStorage fallback.
  */
 
-import { REMOTE_CHANNEL_NAME, REMOTE_STORAGE_KEY } from './remote.js';
+import { REMOTE_CHANNEL_NAME, REMOTE_STORAGE_KEY, WEBSOCKET_RELAY_BASE } from './remote.js';
 import { getPaceDescription } from './scroller.js';
 import { APP_VERSION } from './version.js';
 
 export class RemoteClientController {
   constructor() {
+    this._sessionId = null;
+    this._ws = null;
     this._channel = null;
     this._isConnected = false;
     this._state = {
@@ -49,6 +51,19 @@ export class RemoteClientController {
       el.textContent = APP_VERSION;
     });
 
+    // Extract session ID from URL query param (?session=tp_...)
+    if (typeof window !== 'undefined' && window.location) {
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        this._sessionId = urlParams.get('session');
+        if (this._sessionId) {
+          sessionStorage.setItem('teleprompter_remote_session', this._sessionId);
+        } else {
+          this._sessionId = sessionStorage.getItem('teleprompter_remote_session');
+        }
+      } catch {}
+    }
+
     // Initialize BroadcastChannel
     if (typeof BroadcastChannel !== 'undefined') {
       try {
@@ -73,6 +88,11 @@ export class RemoteClientController {
           }
         }
       });
+    }
+
+    // Initialize WebSocket relay connection if session ID exists
+    if (this._sessionId) {
+      this._connectWebSocket();
     }
 
     this._bindEvents();
@@ -147,6 +167,65 @@ export class RemoteClientController {
     }
   }
 
+  _connectWebSocket() {
+    if (typeof WebSocket === 'undefined' || !this._sessionId) return;
+    if (this._ws) {
+      try {
+        this._ws.onclose = null;
+        this._ws.onerror = null;
+        this._ws.close();
+      } catch {}
+      this._ws = null;
+    }
+
+    const relayBase = (typeof localStorage !== 'undefined' && localStorage.getItem('teleprompter_custom_ws_relay')) || WEBSOCKET_RELAY_BASE;
+    const wsUrl = `${relayBase}${this._sessionId}`;
+
+    try {
+      const ws = new WebSocket(wsUrl);
+      this._ws = ws;
+
+      ws.onopen = () => {
+        console.log('[RemoteClient] WebSocket relay connected to session:', this._sessionId);
+        this._isConnected = true;
+        this._render();
+        this.requestState();
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const raw = JSON.parse(event.data);
+          if (raw.type === 'join' || raw.type === 'leave') return;
+
+          const payload = raw.message || raw;
+          if (payload && typeof payload === 'object') {
+            this._handleMessage(payload);
+          }
+        } catch (err) {
+          console.warn('[RemoteClient] WebSocket message parse error:', err);
+        }
+      };
+
+      ws.onclose = () => {
+        this._isConnected = false;
+        this._render();
+        if (this._ws === ws) {
+          setTimeout(() => {
+            if (this._ws === ws) {
+              this._connectWebSocket();
+            }
+          }, 2000);
+        }
+      };
+
+      ws.onerror = (err) => {
+        console.warn('[RemoteClient] WebSocket error:', err);
+      };
+    } catch (err) {
+      console.warn('[RemoteClient] WebSocket init error:', err);
+    }
+  }
+
   /**
    * Requests immediate state sync from teleprompter host.
    */
@@ -170,24 +249,36 @@ export class RemoteClientController {
   _postMessage(message) {
     message.id = `${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
     message.timestamp = Date.now();
+    if (this._sessionId) {
+      message.sessionId = this._sessionId;
+    }
 
-    // Prefer BroadcastChannel when available, avoiding duplicate LocalStorage events
+    let sent = false;
+
+    // 1. Send via WebSocket relay if connected (smartphone or network)
+    if (this._ws && this._ws.readyState === WebSocket.OPEN) {
+      try {
+        this._ws.send(JSON.stringify(message));
+        sent = true;
+      } catch {}
+    }
+
+    // 2. Send via BroadcastChannel if available (same-computer presenter popup)
     if (this._channel) {
       try {
         this._channel.postMessage(message);
-        return;
-      } catch {
-        // Channel error, fall back to LocalStorage below
-      }
+        sent = true;
+      } catch {}
     }
 
-    try {
-      localStorage.setItem(
-        REMOTE_STORAGE_KEY,
-        JSON.stringify({ sender: 'client', payload: message, ts: Date.now() })
-      );
-    } catch {
-      // LocalStorage error
+    // 3. Fallback to LocalStorage only if neither transport succeeded
+    if (!sent) {
+      try {
+        localStorage.setItem(
+          REMOTE_STORAGE_KEY,
+          JSON.stringify({ sender: 'client', payload: message, ts: Date.now() })
+        );
+      } catch {}
     }
   }
 

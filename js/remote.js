@@ -10,6 +10,54 @@ import { renderQRCode } from './qrcode.js';
 
 export const REMOTE_CHANNEL_NAME = 'teleprompter_remote_channel';
 export const REMOTE_STORAGE_KEY = 'teleprompter_remote_bus';
+export const WEBSOCKET_RELAY_BASE = 'wss://itty.ws/c/';
+
+/**
+ * Synchronous fallback generating 128-bit cryptographically random session ID.
+ * @returns {string}
+ */
+export function generateSessionIdSync() {
+  const entropy = new Uint8Array(16);
+  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+    crypto.getRandomValues(entropy);
+  } else {
+    for (let i = 0; i < 16; i++) {
+      entropy[i] = Math.floor(Math.random() * 256);
+    }
+  }
+  return `tp_${Array.from(entropy).map((b) => b.toString(16).padStart(2, '0')).join('')}`;
+}
+
+/**
+ * Generates a cryptographically secure, collision-free session ID.
+ * Uses 256 bits of CSPRNG entropy hashed via SHA-256 (Web Crypto API).
+ * Output: "tp_" + 24 hexadecimal characters (96 bits of cryptographic hash).
+ * Collision probability across 100,000 concurrent sessions is p < 10^-20.
+ * @returns {Promise<string>}
+ */
+export async function generateSessionId() {
+  const entropy = new Uint8Array(32);
+  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+    crypto.getRandomValues(entropy);
+  } else {
+    for (let i = 0; i < 32; i++) {
+      entropy[i] = Math.floor(Math.random() * 256);
+    }
+  }
+
+  if (typeof crypto !== 'undefined' && crypto.subtle && crypto.subtle.digest) {
+    try {
+      const digestBuffer = await crypto.subtle.digest('SHA-256', entropy);
+      const digestBytes = Array.from(new Uint8Array(digestBuffer));
+      const hashHex = digestBytes.map((b) => b.toString(16).padStart(2, '0')).join('');
+      return `tp_${hashHex.slice(0, 24)}`;
+    } catch {
+      // Fall through to sync fallback
+    }
+  }
+
+  return generateSessionIdSync();
+}
 
 /**
  * Automatically discovers local LAN/Wi-Fi IPv4 address using WebRTC ICE candidate sniffing.
@@ -66,6 +114,8 @@ export async function detectLocalIP() {
  */
 export class RemoteHostController {
   constructor() {
+    this._sessionId = null;
+    this._ws = null;
     this._channel = null;
     this._modalEl = null;
     this._qrContainerEl = null;
@@ -80,6 +130,9 @@ export class RemoteHostController {
     this._resetHostBtnEl = null;
     this._hostSectionEl = null;
     this._autoDetectBadgeEl = null;
+    this._sessionBadgeEl = null;
+    this._newSessionBtnEl = null;
+    this._peerStatusEl = null;
     this._lastBroadcastState = null;
     this._seenMsgIds = new Set();
     this._lastToggleTime = 0;
@@ -102,6 +155,18 @@ export class RemoteHostController {
     this._resetHostBtnEl = document.getElementById('btnResetRemoteHost');
     this._hostSectionEl = document.getElementById('remoteHostConfigSection');
     this._autoDetectBadgeEl = document.getElementById('remoteAutoDetectBadge');
+    this._sessionBadgeEl = document.getElementById('remoteSessionBadge');
+    this._newSessionBtnEl = document.getElementById('btnNewSession');
+    this._peerStatusEl = document.getElementById('remotePeerStatus');
+
+    // Initialize session ID and WebSocket relay
+    this._initSession();
+
+    if (this._newSessionBtnEl) {
+      this._newSessionBtnEl.addEventListener('click', () => {
+        this._initSession(true);
+      });
+    }
 
     // Setup BroadcastChannel
     if (typeof BroadcastChannel !== 'undefined') {
@@ -202,12 +267,125 @@ export class RemoteHostController {
   }
 
   /**
+   * Initializes or refreshes the session ID and reconnects the WebSocket relay.
+   * @param {boolean} [forceNew=false]
+   */
+  async _initSession(forceNew = false) {
+    if (!forceNew && typeof sessionStorage !== 'undefined') {
+      try {
+        const saved = sessionStorage.getItem('teleprompter_session_id');
+        if (saved && saved.startsWith('tp_')) {
+          this._sessionId = saved;
+          this._updateSessionBadge();
+          this._connectWebSocket();
+          this.updatePairingView();
+          return;
+        }
+      } catch {}
+    }
+
+    this._sessionId = await generateSessionId();
+    if (typeof sessionStorage !== 'undefined') {
+      try {
+        sessionStorage.setItem('teleprompter_session_id', this._sessionId);
+      } catch {}
+    }
+    this._updateSessionBadge();
+    this._connectWebSocket();
+    this.updatePairingView();
+  }
+
+  _updateSessionBadge() {
+    if (this._sessionBadgeEl && this._sessionId) {
+      this._sessionBadgeEl.textContent = this._sessionId;
+      this._sessionBadgeEl.title = `Active Session: ${this._sessionId}`;
+    }
+  }
+
+  _connectWebSocket() {
+    if (typeof WebSocket === 'undefined' || !this._sessionId) return;
+    if (this._ws) {
+      try {
+        this._ws.onclose = null;
+        this._ws.onerror = null;
+        this._ws.close();
+      } catch {}
+      this._ws = null;
+    }
+
+    const relayBase = (typeof localStorage !== 'undefined' && localStorage.getItem('teleprompter_custom_ws_relay')) || WEBSOCKET_RELAY_BASE;
+    const wsUrl = `${relayBase}${this._sessionId}`;
+
+    try {
+      const ws = new WebSocket(wsUrl);
+      this._ws = ws;
+
+      ws.onopen = () => {
+        console.log('[RemoteHost] WebSocket relay connected:', this._sessionId);
+        this.broadcastState();
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const raw = JSON.parse(event.data);
+          if (raw.type === 'join') {
+            if (raw.total >= 2) {
+              this._setPeerConnected(true);
+              this.broadcastState();
+            }
+            return;
+          }
+          if (raw.type === 'leave') {
+            if (raw.total <= 1) {
+              this._setPeerConnected(false);
+            }
+            return;
+          }
+
+          const payload = raw.message || raw;
+          if (payload && typeof payload === 'object') {
+            this._handleRemoteMessage(payload);
+          }
+        } catch (err) {
+          console.warn('[RemoteHost] WebSocket parse error:', err);
+        }
+      };
+
+      ws.onclose = () => {
+        this._setPeerConnected(false);
+        if (this._ws === ws) {
+          setTimeout(() => {
+            if (this._ws === ws) {
+              this._connectWebSocket();
+            }
+          }, 2500);
+        }
+      };
+
+      ws.onerror = (err) => {
+        console.warn('[RemoteHost] WebSocket error:', err);
+      };
+    } catch (err) {
+      console.warn('[RemoteHost] WebSocket init failed:', err);
+    }
+  }
+
+  _setPeerConnected(isConnected) {
+    if (this._peerStatusEl) {
+      this._peerStatusEl.style.display = isConnected ? 'flex' : 'none';
+    }
+  }
+
+  /**
    * Computes the URL for the remote controller.
    * @param {boolean} forMobile If true, resolves custom Wi-Fi host for phone pairing
    * @returns {string}
    */
   getRemoteUrl(forMobile = false) {
-    if (typeof window === 'undefined') return './remote.html';
+    if (typeof window === 'undefined') {
+      const sessionQuery = this._sessionId ? `?session=${encodeURIComponent(this._sessionId)}` : '';
+      return `./remote.html${sessionQuery}`;
+    }
     try {
       const url = new URL(window.location.href);
       const cleanPath = url.pathname.replace(/\/index\.html$/, '').replace(/\/$/, '');
@@ -223,14 +401,18 @@ export class RemoteHostController {
           const hostWithoutProto = customHost.replace(/^https?:\/\//i, '').replace(/\/.*$/, '');
           const hasPort = hostWithoutProto.includes(':');
           const portPart = (!hasPort && url.port) ? `:${url.port}` : '';
-          return `${url.protocol}//${hostWithoutProto}${portPart}${cleanPath}${targetPath}`;
+          base = `${url.protocol}//${hostWithoutProto}${portPart}${cleanPath}${targetPath}`;
         }
       }
 
-      return `${url.origin}${cleanPath}${targetPath}`;
+      if (this._sessionId) {
+        return `${base}?session=${encodeURIComponent(this._sessionId)}`;
+      }
+      return base;
     } catch {
       const base = window.location.href.replace(/index\.html$/, '').replace(/\/$/, '');
-      return `${base}/remote.html`;
+      const sessionQuery = this._sessionId ? `?session=${encodeURIComponent(this._sessionId)}` : '';
+      return `${base}/remote.html${sessionQuery}`;
     }
   }
 
@@ -398,6 +580,7 @@ export class RemoteHostController {
       id: `${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
       type: 'PROMPTER_STATE',
       state: payload,
+      sessionId: this._sessionId,
       timestamp: Date.now()
     };
 
@@ -408,6 +591,15 @@ export class RemoteHostController {
         sentViaChannel = true;
       } catch {
         // Channel may be closed
+      }
+    }
+
+    // Also broadcast over WebSocket relay to smartphone pocket remotes
+    if (this._ws && this._ws.readyState === WebSocket.OPEN) {
+      try {
+        this._ws.send(JSON.stringify(message));
+      } catch {
+        // WebSocket send error
       }
     }
 

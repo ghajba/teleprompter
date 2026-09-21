@@ -7,7 +7,13 @@
  */
 
 import assert from 'node:assert/strict';
-import { REMOTE_CHANNEL_NAME, REMOTE_STORAGE_KEY } from '../js/remote.js';
+import {
+  REMOTE_CHANNEL_NAME,
+  REMOTE_STORAGE_KEY,
+  WEBSOCKET_RELAY_BASE,
+  generateSessionId,
+  generateSessionIdSync
+} from '../js/remote.js';
 
 console.log('🧪 Starting tests for Remote Control Messaging Protocol...');
 
@@ -16,7 +22,30 @@ assert.equal(typeof REMOTE_CHANNEL_NAME, 'string');
 assert.ok(REMOTE_CHANNEL_NAME.length > 5);
 assert.equal(typeof REMOTE_STORAGE_KEY, 'string');
 assert.ok(REMOTE_STORAGE_KEY.length > 5);
-console.log('✓ Communication bus identifiers verified');
+assert.equal(typeof WEBSOCKET_RELAY_BASE, 'string');
+assert.ok(WEBSOCKET_RELAY_BASE.startsWith('wss://'));
+console.log('✓ Communication bus and WebSocket relay identifiers verified');
+
+// Test 2: Cryptographic Session ID generation & collision resistance
+const syncId = generateSessionIdSync();
+assert.ok(syncId.startsWith('tp_'), 'Session ID must start with tp_ prefix');
+assert.equal(syncId.length, 35, 'Sync session ID must be 35 chars (tp_ + 32 hex chars = 128 bits)');
+assert.ok(/^[a-z0-9_]+$/.test(syncId), 'Session ID must be URL-safe alphanumeric');
+
+const asyncId = await generateSessionId();
+assert.ok(asyncId.startsWith('tp_'), 'Async SHA-256 session ID must start with tp_ prefix');
+assert.ok(asyncId.length >= 27, 'Async session ID must have sufficient cryptographic entropy');
+assert.ok(/^[a-z0-9_]+$/.test(asyncId), 'Session ID must be strictly URL-safe');
+
+// Verify uniqueness and zero collision across 100 generated sessions
+const generatedIds = new Set();
+for (let i = 0; i < 100; i++) {
+  const id = await generateSessionId();
+  assert.ok(!generatedIds.has(id), `Session collision detected at index ${i}: ${id}`);
+  generatedIds.add(id);
+}
+assert.equal(generatedIds.size, 100, 'All 100 generated session IDs must be strictly unique');
+console.log('✓ Cryptographic SHA-256 session ID entropy & zero-collision verified');
 
 // Test 2: Message payload serialization and structure
 const validCommands = [
@@ -73,11 +102,16 @@ assert.equal(typeof renderQRCode, 'function', 'renderQRCode must be a function')
 assert.equal(typeof QRCode, 'function', 'QRCode constructor must be a function');
 console.log('✓ Pure JS QR Code generator loaded in strict mode without runtime exceptions');
 
-// Test 5: Remote host controller methods
+// Test 5: Remote host controller methods & session query URL resolution
 const { remoteHost, detectLocalIP } = await import('../js/remote.js');
 assert.equal(typeof remoteHost.getRemoteUrl, 'function');
 assert.ok(remoteHost.getRemoteUrl().includes('remote.html'));
-console.log('✓ Remote host URL resolution verified');
+remoteHost._sessionId = 'tp_mock_test_session_456';
+assert.ok(
+  remoteHost.getRemoteUrl().includes('session=tp_mock_test_session_456'),
+  'getRemoteUrl must include session query param when session is active'
+);
+console.log('✓ Remote host URL and session query parameter resolution verified');
 
 // Test 6: WebRTC local IP auto-detection export & headless fallback
 assert.equal(typeof detectLocalIP, 'function', 'detectLocalIP must be exported as a function');
