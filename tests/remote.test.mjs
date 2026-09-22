@@ -119,4 +119,23 @@ const detected = await detectLocalIP();
 assert.equal(detected, null, 'detectLocalIP should resolve null gracefully in Node.js headless environment');
 console.log('✓ Zero-dependency WebRTC IP sniffer headless fallback verified');
 
+// Test 7: Auto-close pairing modal on peer connection
+let modalClosed = false;
+remoteHost._modalEl = {
+  classList: {
+    contains: (cls) => cls !== 'hidden',
+    add: () => { modalClosed = true; },
+    remove: () => {}
+  }
+};
+remoteHost._peerStatusEl = { style: { display: 'none' } };
+remoteHost._isPeerConnected = false;
+remoteHost._setPeerConnected(true);
+assert.equal(remoteHost._isPeerConnected, true);
+assert.ok(remoteHost._autoCloseTimer !== null, 'Auto-close timer must be scheduled');
+remoteHost.closeModal();
+assert.equal(modalClosed, true);
+assert.equal(remoteHost._autoCloseTimer, null);
+console.log('✓ Auto-closing pairing modal on peer connection verified');
+
 console.log('🎉 All Remote Control protocol tests passed successfully!');

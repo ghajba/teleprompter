@@ -136,6 +136,8 @@ export class RemoteHostController {
     this._lastBroadcastState = null;
     this._seenMsgIds = new Set();
     this._lastToggleTime = 0;
+    this._isPeerConnected = false;
+    this._autoCloseTimer = null;
   }
 
   /**
@@ -284,6 +286,10 @@ export class RemoteHostController {
       } catch {}
     }
 
+    if (forceNew) {
+      this._isPeerConnected = false;
+    }
+
     // Immediately generate 128-bit CSPRNG session ID synchronously
     this._sessionId = generateSessionIdSync();
     if (typeof sessionStorage !== 'undefined') {
@@ -372,8 +378,21 @@ export class RemoteHostController {
   }
 
   _setPeerConnected(isConnected) {
+    const wasConnected = this._isPeerConnected;
+    this._isPeerConnected = isConnected;
+
     if (this._peerStatusEl) {
       this._peerStatusEl.style.display = isConnected ? 'flex' : 'none';
+    }
+
+    // Auto-close pairing modal on transition from disconnected to connected after a brief confirmation delay
+    if (!wasConnected && isConnected && this._modalEl && !this._modalEl.classList.contains('hidden')) {
+      if (this._autoCloseTimer) {
+        clearTimeout(this._autoCloseTimer);
+      }
+      this._autoCloseTimer = setTimeout(() => {
+        this.closeModal();
+      }, 1000);
     }
   }
 
@@ -511,6 +530,10 @@ export class RemoteHostController {
    * Closes the remote pairing modal.
    */
   closeModal() {
+    if (this._autoCloseTimer) {
+      clearTimeout(this._autoCloseTimer);
+      this._autoCloseTimer = null;
+    }
     if (this._modalEl) {
       this._modalEl.classList.add('hidden');
     }
@@ -637,6 +660,9 @@ export class RemoteHostController {
         this._seenMsgIds.delete(oldest);
       }
     }
+
+    // Mark peer as connected on receiving message
+    this._setPeerConnected(true);
 
     if (message.type === 'REMOTE_REQUEST_STATE') {
       this._lastBroadcastState = null;

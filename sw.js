@@ -3,7 +3,7 @@
  * Strategy: Cache-First with Network Fallback and Offline Pre-caching.
  */
 
-const CACHE_NAME = 'teleprompter-v1.1.5';
+const CACHE_NAME = 'teleprompter-v1.1.6';
 
 const PRECACHE_ASSETS = [
   './',
