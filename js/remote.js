@@ -270,7 +270,7 @@ export class RemoteHostController {
    * Initializes or refreshes the session ID and reconnects the WebSocket relay.
    * @param {boolean} [forceNew=false]
    */
-  async _initSession(forceNew = false) {
+  _initSession(forceNew = false) {
     if (!forceNew && typeof sessionStorage !== 'undefined') {
       try {
         const saved = sessionStorage.getItem('teleprompter_session_id');
@@ -284,7 +284,8 @@ export class RemoteHostController {
       } catch {}
     }
 
-    this._sessionId = await generateSessionId();
+    // Immediately generate 128-bit CSPRNG session ID synchronously
+    this._sessionId = generateSessionIdSync();
     if (typeof sessionStorage !== 'undefined') {
       try {
         sessionStorage.setItem('teleprompter_session_id', this._sessionId);
@@ -386,16 +387,19 @@ export class RemoteHostController {
       const sessionQuery = this._sessionId ? `?session=${encodeURIComponent(this._sessionId)}` : '';
       return `./remote.html${sessionQuery}`;
     }
+
+    let base = '';
     try {
       const url = new URL(window.location.href);
       const cleanPath = url.pathname.replace(/\/index\.html$/, '').replace(/\/$/, '');
-
-      // Target the physical /remote.html file for 100% compatibility across static servers and GitHub Pages
       const targetPath = '/remote.html';
+
+      // Default base URL (current origin)
+      base = `${url.origin}${cleanPath}${targetPath}`;
 
       if (forMobile) {
         const customHost = (this._hostInputEl ? this._hostInputEl.value.trim() : '') ||
-          localStorage.getItem('teleprompter_custom_remote_host');
+          (typeof localStorage !== 'undefined' ? localStorage.getItem('teleprompter_custom_remote_host') : '');
 
         if (customHost) {
           const hostWithoutProto = customHost.replace(/^https?:\/\//i, '').replace(/\/.*$/, '');
@@ -404,16 +408,15 @@ export class RemoteHostController {
           base = `${url.protocol}//${hostWithoutProto}${portPart}${cleanPath}${targetPath}`;
         }
       }
-
-      if (this._sessionId) {
-        return `${base}?session=${encodeURIComponent(this._sessionId)}`;
-      }
-      return base;
     } catch {
-      const base = window.location.href.replace(/index\.html$/, '').replace(/\/$/, '');
-      const sessionQuery = this._sessionId ? `?session=${encodeURIComponent(this._sessionId)}` : '';
-      return `${base}/remote.html${sessionQuery}`;
+      const origin = window.location.href.replace(/index\.html$/, '').replace(/\/$/, '');
+      base = `${origin}/remote.html`;
     }
+
+    if (this._sessionId) {
+      return `${base}?session=${encodeURIComponent(this._sessionId)}`;
+    }
+    return base;
   }
 
   /**
@@ -483,6 +486,7 @@ export class RemoteHostController {
    * Updates pairing URL input and redraws QR code.
    */
   updatePairingView() {
+    this._updateSessionBadge();
     const mobileUrl = this.getRemoteUrl(true);
     if (this._urlInputEl) {
       this._urlInputEl.value = mobileUrl;
