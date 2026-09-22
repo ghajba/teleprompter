@@ -114,7 +114,7 @@ export async function detectLocalIP() {
  */
 export class RemoteHostController {
   constructor() {
-    this._sessionId = null;
+    this._sessionId = generateSessionIdSync();
     this._ws = null;
     this._channel = null;
     this._modalEl = null;

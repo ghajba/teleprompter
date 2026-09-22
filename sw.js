@@ -3,7 +3,7 @@
  * Strategy: Cache-First with Network Fallback and Offline Pre-caching.
  */
 
-const CACHE_NAME = 'teleprompter-v1.1.6';
+const CACHE_NAME = 'teleprompter-v1.2.0';
 
 const PRECACHE_ASSETS = [
   './',
@@ -33,12 +33,11 @@ const PRECACHE_ASSETS = [
 
 // Install Event: Pre-cache the entire application shell
 self.addEventListener('install', (event) => {
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       console.log('[SW] Pre-caching offline application shell:', CACHE_NAME);
       return cache.addAll(PRECACHE_ASSETS);
-    }).then(() => {
-      return self.skipWaiting();
     })
   );
 });
@@ -82,7 +81,30 @@ self.addEventListener('fetch', (event) => {
         });
       };
 
-      // 1. Direct cache match
+      // 0. For local development hosts, prefer Network-First so code updates apply immediately
+      const isDevHost = url.hostname === 'localhost' ||
+                        url.hostname === '127.0.0.1' ||
+                        url.hostname.startsWith('192.168.') ||
+                        url.hostname.startsWith('172.') ||
+                        url.hostname.startsWith('10.');
+
+      if (isDevHost) {
+        try {
+          let networkResponse = await fetch(event.request);
+          if (networkResponse && networkResponse.redirected) {
+            networkResponse = await sanitizeResponse(networkResponse);
+          }
+          if (networkResponse && networkResponse.status === 200) {
+            const cache = await caches.open(CACHE_NAME);
+            cache.put(event.request, networkResponse.clone());
+          }
+          return networkResponse;
+        } catch {
+          // If offline in dev environment, fall through to cache below
+        }
+      }
+
+      // 1. Direct cache match (Production Cache-First for offline PWA speed)
       const cached = await caches.match(event.request);
       if (cached) {
         return sanitizeResponse(cached);

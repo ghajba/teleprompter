@@ -92,10 +92,20 @@ export class DrawerController {
         try {
           const registrations = await navigator.serviceWorker.getRegistrations();
           for (const reg of registrations) {
-            await reg.update();
+            await reg.unregister();
           }
         } catch (err) {
-          console.warn('[PWA] Refresh check failed:', err);
+          console.warn('[PWA] Refresh unregister failed:', err);
+        }
+      }
+      if ('caches' in window) {
+        try {
+          const keys = await caches.keys();
+          for (const key of keys) {
+            await caches.delete(key);
+          }
+        } catch (err) {
+          console.warn('[PWA] Cache purge failed:', err);
         }
       }
       window.location.reload();

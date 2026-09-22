@@ -233,7 +233,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js')
+      navigator.serviceWorker.register('./sw.js?v=1.2.0')
         .then((reg) => {
           console.log('[PWA] Service Worker registered with scope:', reg.scope);
           // Check for newer versions on server
@@ -252,10 +252,20 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
           const registrations = await navigator.serviceWorker.getRegistrations();
           for (const reg of registrations) {
-            await reg.update();
+            await reg.unregister();
           }
         } catch (err) {
-          console.warn('[PWA] Update check failed:', err);
+          console.warn('[PWA] Unregister failed:', err);
+        }
+      }
+      if ('caches' in window) {
+        try {
+          const keys = await caches.keys();
+          for (const key of keys) {
+            await caches.delete(key);
+          }
+        } catch (err) {
+          console.warn('[PWA] Cache purge failed:', err);
         }
       }
       window.location.reload();
