@@ -4,7 +4,7 @@
  */
 
 import assert from 'node:assert/strict';
-import { escapeHtml, stripMarkdown, renderMarkdown } from '../js/markdown.js';
+import { escapeHtml, stripMarkdown, renderMarkdown, renderPlainText } from '../js/markdown.js';
 
 console.log('🧪 Starting tests for Markdown parser...');
 
@@ -76,5 +76,20 @@ assert.equal(
   'Second consecutive empty line should insert a controlled break spacer'
 );
 console.log('✓ Paragraph separation and controlled empty line spacing passed');
+
+// Test 9: renderPlainText wrapping into HTML paragraphs and empty spacers
+const rawPlain = 'First line\n\nSecond line\n\n\nThird line';
+const renderedPlain = renderPlainText(rawPlain);
+assert.equal(
+  renderedPlain.includes('<p class="prompter-p">First line</p><p class="prompter-p">Second line</p>'),
+  true,
+  'Plain text lines should be cleanly wrapped in paragraph tags'
+);
+assert.equal(
+  renderedPlain.includes('<div class="prompter-line-break"></div><p class="prompter-p">Third line</p>'),
+  true,
+  'Subsequent empty lines should insert line-break spacers in plain text mode'
+);
+console.log('✓ Plain-text paragraph generation and spacer formatting passed');
 
 console.log('🎉 All Markdown parser tests passed successfully!');

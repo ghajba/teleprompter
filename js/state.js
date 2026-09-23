@@ -52,6 +52,7 @@ export const DEFAULT_STATE = Object.freeze({
   renderMarkdown: true, // render rich Markdown formatting (headings, bold, cues)
   readingHighlightMode: 'none', // visual focus mode ('none', 'dim', 'accent')
   voiceFollowEnabled: false, // voice recognition automatic scrolling
+  voiceFollowMode: 'voice-driven', // scroll behavior ('voice-driven', 'assisted')
   voiceLanguage: 'auto', // voice language ('auto', 'hu-HU', 'en-US')
   reverseScroll: false, // backwards scrolling flag
   isCountingDown: false // active countdown status

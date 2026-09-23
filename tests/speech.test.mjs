@@ -7,7 +7,7 @@
  */
 
 import assert from 'node:assert/strict';
-import { normalizeWord, detectScriptLanguage } from '../js/speech.js';
+import { normalizeWord, detectScriptLanguage, matchTokens, SpeechFollowEngine } from '../js/speech.js';
 
 console.log('🧪 Starting tests for Speech Follow word normalization...');
 
@@ -61,23 +61,6 @@ assert.equal(
 console.log('✓ Script language detection verified');
 
 // Test 6: Sliding window speech token alignment algorithm
-function matchTokens(spokenWords, scriptTokens, lastIndex = 0) {
-  const normSpoken = spokenWords.map(normalizeWord).filter((w) => w.length > 1);
-  const searchStart = Math.max(0, lastIndex - 5);
-  const searchEnd = Math.min(scriptTokens.length, lastIndex + 35);
-  let matchedIndex = lastIndex;
-
-  for (const spoken of normSpoken) {
-    for (let i = searchStart; i < searchEnd; i++) {
-      if (scriptTokens[i] === spoken) {
-        matchedIndex = i;
-        break;
-      }
-    }
-  }
-  return matchedIndex;
-}
-
 const script = 'udvozoljuk a teleprompter alkalmazasban amely zokkenomentes olvasast biztosit'
   .split(' ');
 
@@ -97,6 +80,56 @@ assert.equal(matchDe1, 1, 'Should match "tag" at index 1');
 const matchDe2 = matchTokens(['herzlich', 'willkommen', 'zu', 'unserer', 'großen'], germanScript, matchDe1);
 assert.equal(matchDe2, 7, 'Should match "großen" to "grossen" at index 7');
 console.log('✓ German speech token alignment verified');
-
 console.log('✓ Fuzzy sliding window alignment verified');
+
+// Test 7: Strict monotonic forward matching with repeating stopwords
+const repeatingScript = 'ez a mondat a szovegben es a masik mondat a prompterben'.split(' ');
+const rep1 = matchTokens(['ez', 'a', 'mondat'], repeatingScript, 0);
+assert.equal(rep1, 2, 'Matches "mondat" at 2');
+
+// Interim repetition event must never jump backwards
+const rep2 = matchTokens(['a', 'mondat'], repeatingScript, rep1);
+assert.ok(rep2 >= rep1, 'Monotonic forward: index must never jump backwards on interim repeats');
+
+const rep3 = matchTokens(['masik', 'mondat'], repeatingScript, rep1);
+assert.ok(rep3 > rep1, 'Advances forward on matching phrase');
+console.log('✓ Strict monotonic forward matching and stopword resilience verified');
+
+// Test 8: Stage directions and pause bar exclusion from script indexing
+const mockInner = {
+  children: [
+    {
+      classList: { contains: (c) => c === 'prompter-heading' },
+      textContent: 'Title Line',
+      querySelector: () => null
+    },
+    {
+      classList: { contains: (c) => c === 'prompter-pause-bar' },
+      textContent: 'PAUSE / BREAK',
+      querySelector: () => null
+    },
+    {
+      classList: { contains: (c) => c === 'prompter-p' },
+      textContent: 'Actual spoken sentence [Pause 2s]',
+      querySelector: (sel) => (sel === '.prompter-cue' ? {} : null),
+      cloneNode: () => ({
+        textContent: 'Actual spoken sentence ',
+        querySelectorAll: (sel) => (sel === '.prompter-cue' ? [{ remove: () => {} }] : [])
+      })
+    }
+  ]
+};
+
+globalThis.document = {
+  getElementById: (id) => (id === 'prompterTextInner' ? mockInner : null)
+};
+
+const engine = new SpeechFollowEngine();
+engine.indexScript();
+assert.ok(!engine._scriptTokens.includes('pause'), 'Pause cue must be excluded from spoken tokens');
+assert.ok(!engine._scriptTokens.includes('2s'), 'Cue numbers must be excluded from spoken tokens');
+assert.ok(engine._scriptTokens.includes('title'), 'Heading words must be indexed');
+assert.ok(engine._scriptTokens.includes('spoken'), 'Spoken words must be indexed');
+console.log('✓ Stage directions (.prompter-cue) and pause bars (.prompter-pause-bar) excluded from indexing');
+
 console.log('🎉 All Speech Follow Engine tests passed successfully!');

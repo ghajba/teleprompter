@@ -85,12 +85,20 @@ export class ReadingHighlightController {
 
     if (blocks.length === 0) return;
 
+    let intersectingEl = null;
     let closestEl = null;
     let minDistance = Infinity;
 
     for (const el of blocks) {
       if (typeof el.getBoundingClientRect !== 'function') continue;
       const rect = el.getBoundingClientRect();
+
+      // Check if eyeline coordinate directly intersects this block
+      if (rect.top <= eyelineY && rect.bottom >= eyelineY) {
+        intersectingEl = el;
+        break;
+      }
+
       const midY = rect.top + rect.height / 2;
       const dist = Math.abs(midY - eyelineY);
 
@@ -100,12 +108,14 @@ export class ReadingHighlightController {
       }
     }
 
-    if (closestEl && closestEl !== this._activeElement) {
+    const targetEl = intersectingEl || closestEl;
+
+    if (targetEl && targetEl !== this._activeElement) {
       if (this._activeElement) {
         this._activeElement.classList.remove('is-focused');
       }
-      closestEl.classList.add('is-focused');
-      this._activeElement = closestEl;
+      targetEl.classList.add('is-focused');
+      this._activeElement = targetEl;
     }
   }
 

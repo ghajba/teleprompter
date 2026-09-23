@@ -78,14 +78,70 @@ export function detectScriptLanguage(text) {
   return (typeof navigator !== 'undefined' && navigator.language) ? navigator.language : 'en-US';
 }
 
+// High-frequency stopwords in Hungarian, German, and English
+const STOPWORDS = new Set([
+  'a', 'az', 'es', 'hogy', 'nem', 'de', 'is', 'meg', 'ha', 'mint', 'egy', 'van', 'volt', 'mar',
+  'der', 'die', 'das', 'und', 'ist', 'mit', 'in', 'im', 'fur', 'von', 'zu', 'ein', 'eine', 'sie',
+  'the', 'and', 'to', 'of', 'in', 'is', 'that', 'it', 'for', 'on', 'with', 'as', 'at', 'by'
+]);
+
+/**
+ * Monotonically matches spoken words forward against script tokens.
+ * Uses 2-word sequence matching and stopword gating to prevent erratic jumping.
+ * @param {string[]} spokenWords 
+ * @param {string[]} scriptTokens 
+ * @param {number} [lastIndex=0] 
+ * @returns {number}
+ */
+export function matchTokens(spokenWords, scriptTokens, lastIndex = 0) {
+  const normSpoken = spokenWords.map(normalizeWord).filter((w) => w.length > 0);
+  if (normSpoken.length === 0 || scriptTokens.length === 0) return lastIndex;
+
+  const searchStart = lastIndex;
+  const searchEnd = Math.min(scriptTokens.length, lastIndex + 30);
+  let bestMatch = lastIndex;
+
+  // 1. Check two-word sequences (highest confidence)
+  if (normSpoken.length >= 2) {
+    for (let s = 0; s < normSpoken.length - 1; s++) {
+      const w1 = normSpoken[s];
+      const w2 = normSpoken[s + 1];
+      for (let i = searchStart; i < searchEnd - 1; i++) {
+        if (scriptTokens[i] === w1 && scriptTokens[i + 1] === w2) {
+          bestMatch = Math.max(bestMatch, i + 1);
+        }
+      }
+    }
+  }
+
+  // 2. Single-token fallback if no multi-word sequence advanced
+  if (bestMatch === lastIndex) {
+    for (let s = normSpoken.length - 1; s >= 0; s--) {
+      const word = normSpoken[s];
+      const isStop = STOPWORDS.has(word);
+      for (let i = searchStart; i < searchEnd; i++) {
+        if (scriptTokens[i] === word) {
+          if (!isStop || i <= searchStart + 4) {
+            bestMatch = Math.max(bestMatch, i);
+            break;
+          }
+        }
+      }
+      if (bestMatch > lastIndex) break;
+    }
+  }
+
+  return bestMatch;
+}
+
 export class SpeechFollowEngine {
   constructor() {
     this._recognition = null;
     this._isListening = false;
     this._scriptTokens = [];
-    this._tokenElements = [];
+    this._tokenMap = [];
     this._lastMatchedIndex = 0;
-    this._status = 'idle'; // 'idle' | 'listening' | 'paused' | 'error' | 'unsupported'
+    this._status = 'idle'; // 'idle' | 'ready' | 'listening' | 'paused' | 'error' | 'unsupported'
     this._listeners = new Set();
   }
 
@@ -99,57 +155,116 @@ export class SpeechFollowEngine {
       return;
     }
 
-    // Subscribe to state changes for voice follow
+    // Subscribe to state changes
     store.subscribe((state, changedKeys) => {
-      if (changedKeys.includes('voiceFollowEnabled')) {
-        if (state.voiceFollowEnabled) {
-          this.start();
-        } else {
-          this.stop();
-        }
+      if (
+        changedKeys.includes('voiceFollowEnabled') ||
+        changedKeys.includes('isPlaying') ||
+        changedKeys.includes('isCountingDown') ||
+        changedKeys.includes('voiceFollowMode')
+      ) {
+        this._syncPlaybackState();
       }
+
       if (changedKeys.includes('voiceLanguage') && this._isListening) {
-        // Restart with new language
         this.stop();
-        this.start();
+        this._syncPlaybackState();
       }
-      if (changedKeys.includes('text')) {
+
+      if (changedKeys.includes('text') || changedKeys.includes('renderMarkdown')) {
         this.indexScript();
       }
     });
 
     this.indexScript();
+    this._syncPlaybackState();
+  }
 
-    if (store.getState().voiceFollowEnabled) {
-      this.start();
+  /**
+   * Synchronizes microphone lifecycle with prompter playback status.
+   * Strictly listens only when Voice Follow is enabled AND playback is active.
+   * @private
+   */
+  _syncPlaybackState() {
+    const { voiceFollowEnabled, isPlaying, isCountingDown } = store.getState();
+    const shouldListen = Boolean(voiceFollowEnabled && isPlaying && !isCountingDown);
+
+    if (shouldListen) {
+      if (!this._isListening) {
+        this.start();
+      }
+    } else {
+      if (this._isListening) {
+        this.stop();
+      } else {
+        this._status = voiceFollowEnabled ? 'ready' : 'idle';
+        this._notifyStatus();
+      }
+      if (typeof scroller !== 'undefined' && scroller.setVoiceSpeedMultiplier) {
+        scroller.setVoiceSpeedMultiplier(1);
+      }
     }
   }
 
   /**
-   * Parses the active prompter text and indexes word tokens for fast alignment.
+   * Resets reading progress counter back to start.
+   */
+  resetProgress() {
+    this._lastMatchedIndex = 0;
+    if (typeof scroller !== 'undefined') {
+      if (scroller.clearVoiceTarget) scroller.clearVoiceTarget();
+      if (scroller.setVoiceSpeedMultiplier) scroller.setVoiceSpeedMultiplier(1);
+    }
+  }
+
+  /**
+   * Parses active prompter DOM blocks and indexes word tokens.
+   * Strips stage direction cues (.prompter-cue) and pause bars (.prompter-pause-bar).
    */
   indexScript() {
     if (typeof document === 'undefined') return;
 
     const innerEl = document.getElementById('prompterTextInner');
-    const rawText = store.getState().text || '';
-    const cleanText = stripMarkdown(rawText);
-
     this._scriptTokens = [];
-    this._tokenElements = [];
+    this._tokenMap = [];
     this._lastMatchedIndex = 0;
 
-    const words = cleanText.split(/\s+/).filter(Boolean);
-    for (let i = 0; i < words.length; i++) {
-      this._scriptTokens.push(normalizeWord(words[i]));
-    }
+    if (!innerEl) return;
 
-    // Map blocks in DOM
-    if (innerEl) {
-      const blocks = Array.from(innerEl.children).filter(
-        (el) => !el.classList.contains('prompter-line-break')
-      );
-      this._tokenElements = blocks;
+    const blocks = Array.from(innerEl.children).filter(
+      (el) => !el.classList.contains('prompter-line-break')
+    );
+
+    for (let blockIdx = 0; blockIdx < blocks.length; blockIdx++) {
+      const blockEl = blocks[blockIdx];
+
+      // Exclude scene break / pause bars
+      if (blockEl.classList.contains('prompter-pause-bar')) {
+        continue;
+      }
+
+      // Clone element to safely remove stage directions without altering live DOM
+      let textContent = '';
+      if (blockEl.querySelector && blockEl.querySelector('.prompter-cue')) {
+        const clone = blockEl.cloneNode(true);
+        clone.querySelectorAll('.prompter-cue').forEach((cue) => cue.remove());
+        textContent = clone.textContent || '';
+      } else {
+        textContent = blockEl.textContent || '';
+      }
+
+      const words = textContent.split(/\s+/).filter(Boolean);
+      for (let w = 0; w < words.length; w++) {
+        const norm = normalizeWord(words[w]);
+        if (norm.length > 0) {
+          this._scriptTokens.push(norm);
+          this._tokenMap.push({
+            word: norm,
+            element: blockEl,
+            blockIndex: blockIdx
+          });
+        }
+      }
     }
   }
 
@@ -193,14 +308,16 @@ export class SpeechFollowEngine {
         if (event.error === 'not-allowed') {
           this._status = 'error';
           store.setState({ voiceFollowEnabled: false });
+        } else if (event.error !== 'no-speech') {
+          this._status = 'error';
         }
         this._notifyStatus();
       };
 
       this._recognition.onend = () => {
         this._isListening = false;
-        // Auto-restart if user still has voice follow enabled
-        if (store.getState().voiceFollowEnabled) {
+        const { voiceFollowEnabled, isPlaying, isCountingDown } = store.getState();
+        if (voiceFollowEnabled && isPlaying && !isCountingDown) {
           try {
             this._recognition.start();
           } catch {
@@ -208,7 +325,7 @@ export class SpeechFollowEngine {
             this._notifyStatus();
           }
         } else {
-          this._status = 'idle';
+          this._status = voiceFollowEnabled ? 'ready' : 'idle';
           this._notifyStatus();
         }
       };
@@ -230,11 +347,12 @@ export class SpeechFollowEngine {
       try {
         this._recognition.stop();
       } catch {
-        // Ignore errors during stop
+        // Ignore stop errors
       }
       this._recognition = null;
     }
-    this._status = 'idle';
+    const { voiceFollowEnabled } = store.getState();
+    this._status = voiceFollowEnabled ? 'ready' : 'idle';
     this._notifyStatus();
   }
 
@@ -259,6 +377,7 @@ export class SpeechFollowEngine {
 
   /**
    * Handles incoming recognition transcript events and matches against script tokens.
+   * Uses monotonic forward matching and sequence pairing to eliminate jitter.
    * @param {SpeechRecognitionEvent} event
    * @private
    */
@@ -268,25 +387,19 @@ export class SpeechFollowEngine {
       latestTranscript += ' ' + event.results[i][0].transcript;
     }
 
-    const spokenWords = latestTranscript
+    const spokenTokens = latestTranscript
       .split(/\s+/)
       .map(normalizeWord)
-      .filter((w) => w.length > 1);
+      .filter((w) => w.length > 0);
 
-    if (spokenWords.length === 0 || this._scriptTokens.length === 0) return;
+    if (spokenTokens.length === 0 || this._scriptTokens.length === 0) return;
 
-    // Sliding window search around last matched position
-    const searchStart = Math.max(0, this._lastMatchedIndex - 5);
-    const searchEnd = Math.min(this._scriptTokens.length, this._lastMatchedIndex + 35);
+    const matchedIndex = matchTokens(spokenTokens, this._scriptTokens, this._lastMatchedIndex);
 
-    for (const spokenWord of spokenWords) {
-      for (let i = searchStart; i < searchEnd; i++) {
-        if (this._scriptTokens[i] === spokenWord) {
-          this._lastMatchedIndex = i;
-          this._syncScrollToMatchedToken(i);
-          break;
-        }
-      }
+    // Strictly monotonic: only advance forward
+    if (matchedIndex > this._lastMatchedIndex || (matchedIndex === 0 && this._lastMatchedIndex === 0)) {
+      this._lastMatchedIndex = matchedIndex;
+      this._syncScrollToMatchedToken(matchedIndex);
     }
   }
 
@@ -296,31 +409,40 @@ export class SpeechFollowEngine {
    * @private
    */
   _syncScrollToMatchedToken(tokenIndex) {
-    if (this._tokenElements.length === 0) return;
+    if (!this._tokenMap || tokenIndex >= this._tokenMap.length) return;
+    const tokenInfo = this._tokenMap[tokenIndex];
+    if (!tokenInfo || !tokenInfo.element) return;
 
-    // Approximate target element index based on relative word progress
-    const progressFraction = tokenIndex / Math.max(1, this._scriptTokens.length);
-    const targetBlockIndex = Math.min(
-      this._tokenElements.length - 1,
-      Math.floor(progressFraction * this._tokenElements.length)
-    );
+    const targetEl = tokenInfo.element;
 
-    const targetEl = this._tokenElements[targetBlockIndex];
-    if (targetEl) {
-      highlightController.focusElement(targetEl);
+    // 1. Focus active element in reading highlight
+    highlightController.focusElement(targetEl);
 
-      // Auto-scroll so target element aligns with the eyeline guide
-      const eyelinePercent = store.getState().eyelinePosition || 35;
-      const eyelineY = typeof window !== 'undefined' ? (window.innerHeight * eyelinePercent) / 100 : 280;
-      const rect = targetEl.getBoundingClientRect();
-      const currentScroll = scroller.getScrollY();
+    // 2. Adjust scrolling
+    if (typeof window === 'undefined') return;
+    const eyelinePercent = store.getState().eyelinePosition || 35;
+    const eyelineY = (window.innerHeight * eyelinePercent) / 100;
+    const rect = targetEl.getBoundingClientRect();
+    const currentScroll = scroller.getScrollY();
 
-      // Delta needed to align element's center with eyeline
-      const deltaY = rect.top - eyelineY + rect.height / 2;
-      if (Math.abs(deltaY) > 30) {
-        // Smoothly adjust scroll position
-        const newY = Math.max(0, currentScroll + deltaY * 0.4);
-        scroller.setScrollY(newY);
+    // Target vertical position: align top of block comfortably near the eyeline
+    const elementTargetY = rect.top + Math.min(rect.height * 0.35, 40);
+    const deltaY = elementTargetY - eyelineY;
+
+    const mode = store.getState().voiceFollowMode || 'voice-driven';
+
+    if (mode === 'voice-driven') {
+      // Pure Voice Scroll: set target scroll position for 60+ FPS easing
+      const newTarget = Math.max(0, currentScroll + deltaY);
+      scroller.setVoiceTarget(newTarget);
+    } else if (mode === 'assisted') {
+      // Assisted Pace: modulate scroll speed
+      if (deltaY > 40) {
+        scroller.setVoiceSpeedMultiplier(1.25);
+      } else if (deltaY < -40) {
+        scroller.setVoiceSpeedMultiplier(0.7);
+      } else {
+        scroller.setVoiceSpeedMultiplier(1.0);
       }
     }
   }

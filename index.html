@@ -313,6 +313,15 @@
           </label>
         </div>
 
+        <!-- Voice mode selector (Pure Speech vs Assisted Pace) -->
+        <div id="voiceModeRow" class="control-row" style="margin-top: 0.5rem; display: none;">
+          <label for="voiceModeSelect" style="font-size: 0.85rem; margin-bottom: 0.25rem;">Scroll Behavior</label>
+          <select id="voiceModeSelect" class="select-input">
+            <option value="voice-driven">Pure Voice Scroll (Moves only when speaking)</option>
+            <option value="assisted">Assisted Pace (WPM scroll with voice catch-up)</option>
+          </select>
+        </div>
+
         <!-- Voice language selector -->
         <div id="voiceLanguageRow" class="control-row" style="margin-top: 0.5rem; display: none;">
           <label for="voiceLanguageSelect" style="font-size: 0.85rem; margin-bottom: 0.25rem;">Voice Language</label>

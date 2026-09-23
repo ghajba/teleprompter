@@ -154,3 +154,31 @@ export function renderMarkdown(md) {
 
   return htmlOut.join('');
 }
+
+/**
+ * Renders unformatted plain text into safe HTML paragraph blocks.
+ * Preserves paragraphs and empty line spacing for consistent DOM structure.
+ * @param {string} text
+ * @returns {string}
+ */
+export function renderPlainText(text) {
+  if (!text) return '';
+  const escaped = escapeHtml(text);
+  const lines = escaped.split(/\r?\n/);
+  const htmlOut = [];
+  let emptyLineCount = 0;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (!line.trim()) {
+      emptyLineCount++;
+      if (emptyLineCount > 1) {
+        htmlOut.push('<div class="prompter-line-break"></div>');
+      }
+      continue;
+    }
+    emptyLineCount = 0;
+    htmlOut.push(`<p class="prompter-p">${line}</p>`);
+  }
+  return htmlOut.join('');
+}

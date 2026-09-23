@@ -8,7 +8,7 @@ import { scroller } from './scroller.js';
 import { ControlsManager } from './controls.js';
 import { DrawerController } from './ui/drawer.js';
 import { WelcomeModalController } from './ui/welcome.js';
-import { renderMarkdown } from './markdown.js';
+import { renderMarkdown, renderPlainText } from './markdown.js';
 import { APP_VERSION } from './version.js';
 import { highlightController } from './highlight.js';
 import { speechEngine } from './speech.js';
@@ -45,7 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
       prompterTextInner.innerHTML = renderMarkdown(initialText);
     } else {
       prompterTextInner.classList.add('plain-text');
-      prompterTextInner.textContent = initialText;
+      prompterTextInner.innerHTML = renderPlainText(initialText);
     }
   }
 
@@ -76,6 +76,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   scroller.setOnRender(() => {
     highlightController.scheduleUpdate();
+  });
+
+  scroller.setOnReset(() => {
+    speechEngine.resetProgress();
   });
 
   speechEngine.init();
@@ -150,7 +154,7 @@ document.addEventListener('DOMContentLoaded', () => {
           prompterTextInner.innerHTML = renderMarkdown(state.text || '');
         } else {
           prompterTextInner.classList.add('plain-text');
-          prompterTextInner.textContent = state.text || '';
+          prompterTextInner.innerHTML = renderPlainText(state.text || '');
         }
         speechEngine.indexScript();
         highlightController.updateFocus();
