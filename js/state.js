@@ -50,6 +50,10 @@ export const DEFAULT_STATE = Object.freeze({
   showProgressBar: true, // visual reading progress bar at top of screen
   showTouchControls: false, // on-screen floating touch controls (play, speed, rewind)
   renderMarkdown: true, // render rich Markdown formatting (headings, bold, cues)
+  readingHighlightMode: 'none', // visual focus mode ('none', 'dim', 'accent')
+  voiceFollowEnabled: false, // voice recognition automatic scrolling
+  voiceFollowMode: 'voice-driven', // scroll behavior ('voice-driven', 'assisted')
+  voiceLanguage: 'auto', // voice language ('auto', 'hu-HU', 'en-US')
   reverseScroll: false, // backwards scrolling flag
   isCountingDown: false // active countdown status
 });

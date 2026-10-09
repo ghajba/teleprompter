@@ -31,6 +31,10 @@ class ScrollerEngine {
     this._countdownSecondsLeft = 0;
     this._lastCountdownCancelTime = 0;
 
+    // Smooth voice-driven target scroll coordinates & assisted speed modulation
+    this._voiceTargetScrollY = null;
+    this._voiceSpeedMultiplier = 1;
+
     // Listen to store updates
     store.subscribe((state, changedKeys) => {
       if (changedKeys.includes('isPlaying')) {
@@ -164,11 +168,29 @@ class ScrollerEngine {
     const dt = Math.min((timestamp - this._lastTimestamp) / 1000, 0.1); // Clamp dt to max 100ms
     this._lastTimestamp = timestamp;
 
-    const { isPlaying, speed, reverseScroll } = store.getState();
+    const { isPlaying, speed, reverseScroll, voiceFollowEnabled, voiceFollowMode } = store.getState();
 
-    if (isPlaying && speed > 0) {
-      const direction = reverseScroll ? -1 : 1;
-      this._scrollY += direction * speed * dt;
+    if (isPlaying) {
+      if (voiceFollowEnabled && voiceFollowMode === 'voice-driven') {
+        // Pure Voice Scroll: position smoothly glides toward speech recognition target
+        if (this._voiceTargetScrollY !== null) {
+          const diff = this._voiceTargetScrollY - this._scrollY;
+          if (Math.abs(diff) > 0.5) {
+            this._scrollY += diff * Math.min(1, dt * 7);
+          }
+        }
+      } else {
+        // Constant mechanical scroll or Assisted Pace
+        let effectiveSpeed = speed;
+        if (voiceFollowEnabled && voiceFollowMode === 'assisted') {
+          effectiveSpeed *= (this._voiceSpeedMultiplier || 1);
+        }
+
+        if (effectiveSpeed > 0) {
+          const direction = reverseScroll ? -1 : 1;
+          this._scrollY += direction * effectiveSpeed * dt;
+        }
+      }
 
       // Clamp lower scroll boundary
       if (this._scrollY < 0) {
@@ -206,6 +228,18 @@ class ScrollerEngine {
       const percent = this.getProgressPercent();
       this._progressBarEl.style.width = `${percent}%`;
     }
+
+    if (this._onRender) {
+      this._onRender(this._scrollY);
+    }
+  }
+
+  /**
+   * Sets callback invoked on each render frame / scroll update.
+   * @param {(scrollY: number) => void} callback
+   */
+  setOnRender(callback) {
+    this._onRender = callback;
   }
 
   /**
@@ -291,7 +325,44 @@ class ScrollerEngine {
   reset() {
     this._cancelCountdown();
     this._scrollY = 0;
+    this._voiceTargetScrollY = null;
+    this._voiceSpeedMultiplier = 1;
     this.render();
+    if (this._onReset) {
+      this._onReset();
+    }
+  }
+
+  /**
+   * Sets callback invoked when scroller is reset to top.
+   * @param {() => void} callback
+   */
+  setOnReset(callback) {
+    this._onReset = callback;
+  }
+
+  /**
+   * Sets target vertical scroll position for smooth Voice Follow easing.
+   * @param {number} y
+   */
+  setVoiceTarget(y) {
+    const max = this._maxScrollY > 0 ? this._maxScrollY : 10000;
+    this._voiceTargetScrollY = Math.max(0, Math.min(y, max));
+  }
+
+  /**
+   * Clears active voice target.
+   */
+  clearVoiceTarget() {
+    this._voiceTargetScrollY = null;
+  }
+
+  /**
+   * Sets temporary speed multiplier for assisted voice pace modulation.
+   * @param {number} mult
+   */
+  setVoiceSpeedMultiplier(mult) {
+    this._voiceSpeedMultiplier = mult;
   }
 
   /**
@@ -301,6 +372,7 @@ class ScrollerEngine {
   setScrollY(y) {
     const max = this._maxScrollY > 0 ? this._maxScrollY : 10000;
     this._scrollY = Math.max(0, Math.min(y, max));
+    this._voiceTargetScrollY = this._scrollY;
     this.render();
   }
 

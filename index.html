@@ -54,7 +54,7 @@
       <div class="welcome-header">
         <div class="welcome-badge">
           <span class="welcome-badge-dot"></span>
-          <span><strong class="app-version-text">v1.0.0</strong> &bull; Offline PWA</span>
+          <span><strong class="app-version-text">v1.1.0</strong> &bull; Offline PWA</span>
         </div>
         <button type="button" id="welcomeClose" class="welcome-close-btn" aria-label="Close welcome modal">&times;</button>
       </div>
@@ -144,14 +144,15 @@
     <span id="hudStatus">Paused</span>
     <span id="hudSpeed" class="hud-speed-badge">130 WPM</span>
     <span class="hud-metric-pill" title="Estimated time remaining">⏱ <strong id="hudTime">00:00</strong></span>
-    <span class="hud-metric-pill" title="Speaking pace">🗣️ <strong id="hudWpm">Conversational</strong></span>
-    <span class="hud-version-pill app-version-text" title="Installed App Version">v1.0.1</span>
+    <span class="hud-metric-pill hud-pace-pill" title="Speaking pace">🗣️ <strong id="hudWpm">Conversational</strong></span>
+    <span id="hudVoice" class="hud-metric-pill hidden" title="Voice Follow status">🎙️ <strong id="hudVoiceStatus">Voice</strong></span>
+    <span class="hud-version-pill app-version-text" title="Installed App Version">v1.1.0</span>
   </aside>
 
   <!-- App Version Watermark Indicator (Bottom Left) -->
   <a id="appVersionWatermark" class="app-version-watermark" href="https://github.com/ghajba/teleprompter/blob/main/CHANGELOG.md" target="_blank" rel="noopener noreferrer" title="Teleprompter App Version &bull; Click to view Changelog">
     <span class="version-dot"></span>
-    <span class="app-version-text">v1.0.1</span>
+    <span class="app-version-text">v1.1.0</span>
   </a>
 
   <!-- Floating Settings & Script Drawer Toggle -->
@@ -159,7 +160,7 @@
     <svg viewBox="0 0 24 24">
       <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
     </svg>
-    <span>Settings & Script</span>
+    <span class="drawer-toggle-text">Settings &amp; Script</span>
   </button>
 
   <!-- Eyeline Guide (Visual Reading Anchor) -->
@@ -185,7 +186,7 @@
     <header class="drawer-header">
       <div class="drawer-title-wrap">
         <h2 class="drawer-title">⚙️ Prompter Controls</h2>
-        <span class="drawer-version-badge app-version-text">v1.0.1</span>
+        <span class="drawer-version-badge app-version-text">v1.1.0</span>
       </div>
       <div class="drawer-header-actions">
         <button id="btnHeaderRefresh" class="drawer-header-refresh-btn" type="button" title="Reload app / check for updates">🔄 Refresh</button>
@@ -300,6 +301,40 @@
             </div>
           </label>
         </div>
+
+        <!-- Voice follow toggle -->
+        <div class="control-row" style="margin-top: 0.6rem;">
+          <label class="toggle-switch-label">
+            <span>🎙️ Voice Follow (Auto-Scroll)</span>
+            <div class="switch">
+              <input type="checkbox" id="voiceFollowToggle">
+              <span class="slider-round"></span>
+            </div>
+          </label>
+        </div>
+
+        <!-- Voice mode selector (Pure Speech vs Assisted Pace) -->
+        <div id="voiceModeRow" class="control-row" style="margin-top: 0.5rem; display: none;">
+          <label for="voiceModeSelect" style="font-size: 0.85rem; margin-bottom: 0.25rem;">Scroll Behavior</label>
+          <select id="voiceModeSelect" class="select-input">
+            <option value="voice-driven">Pure Voice Scroll (Moves only when speaking)</option>
+            <option value="assisted">Assisted Pace (WPM scroll with voice catch-up)</option>
+          </select>
+        </div>
+
+        <!-- Voice language selector -->
+        <div id="voiceLanguageRow" class="control-row" style="margin-top: 0.5rem; display: none;">
+          <label for="voiceLanguageSelect" style="font-size: 0.85rem; margin-bottom: 0.25rem;">Voice Language</label>
+          <select id="voiceLanguageSelect" class="select-input">
+            <option value="auto">Auto Detect (Browser Default)</option>
+            <option value="hu-HU">Magyar (Hungarian)</option>
+            <option value="en-US">English (US)</option>
+            <option value="en-GB">English (UK)</option>
+            <option value="de-DE">Deutsch (German)</option>
+            <option value="es-ES">Español (Spanish)</option>
+            <option value="fr-FR">Français (French)</option>
+          </select>
+        </div>
       </section>
 
       <!-- Section 4: Typography & Layout -->
@@ -383,6 +418,25 @@
             <button type="button" class="theme-pill theme-light" data-bg="#ffffff" data-text="#000000">Light</button>
           </div>
         </div>
+
+        <!-- Reading Highlight Mode -->
+        <div class="control-row" style="margin-top: 0.75rem;">
+          <label for="readingHighlightSelect" style="font-size: 0.85rem; margin-bottom: 0.25rem;">Reading Highlight Focus</label>
+          <select id="readingHighlightSelect" class="select-input">
+            <option value="none">None (Standard)</option>
+            <option value="dim">Dim Inactive Lines</option>
+            <option value="accent">Accent Bar &amp; Glow</option>
+          </select>
+        </div>
+      </section>
+
+      <!-- Section: Wireless Remote Control -->
+      <section class="drawer-section">
+        <span class="section-label">📱 Wireless Remote Control</span>
+        <div class="btn-grid">
+          <button type="button" id="btnOpenRemoteWindow" class="btn-ctrl" style="border-color: var(--accent); color: var(--accent);">🪟 Open Remote</button>
+          <button type="button" id="btnShowRemoteQR" class="btn-ctrl" style="border-color: rgba(255, 255, 255, 0.2);">📲 Pair Phone (QR)</button>
+        </div>
       </section>
 
       <!-- Section 5: Controls & Shortcuts Guide -->
@@ -425,12 +479,76 @@
     </div>
 
     <footer class="drawer-footer">
-      <span class="drawer-version-tag">Teleprompter <strong class="app-version-text">v1.0.1</strong></span>
-      <a href="https://github.com/sponsors/ghajba" target="_blank" rel="noopener noreferrer" style="color: #f43f5e; font-weight: 600; text-decoration: none;">💖 Sponsor</a>
-      <a href="https://github.com/ghajba/teleprompter/blob/main/CHANGELOG.md" target="_blank" rel="noopener noreferrer">Changelog</a>
-      <a href="https://github.com/ghajba/teleprompter" target="_blank" rel="noopener noreferrer">GitHub &rarr;</a>
+      <div class="drawer-footer-brand">
+        <span class="drawer-version-tag">Teleprompter <strong class="app-version-text">v1.1.0</strong></span>
+      </div>
+      <div class="drawer-footer-links">
+        <a href="https://github.com/sponsors/ghajba" target="_blank" rel="noopener noreferrer" class="drawer-sponsor-link">💖 Sponsor</a>
+        <span class="drawer-footer-sep">&bull;</span>
+        <a href="https://github.com/ghajba/teleprompter/blob/main/CHANGELOG.md" target="_blank" rel="noopener noreferrer">Changelog</a>
+        <span class="drawer-footer-sep">&bull;</span>
+        <a href="https://github.com/ghajba/teleprompter" target="_blank" rel="noopener noreferrer">GitHub &rarr;</a>
+      </div>
     </footer>
   </aside>
+
+  <!-- Remote Pairing Modal -->
+  <div id="remoteModal" class="welcome-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="remoteTitle">
+    <div class="welcome-modal" style="max-width: 440px;">
+      <div class="welcome-header">
+        <div class="welcome-badge">
+          <span class="welcome-badge-dot"></span>
+          <span>Remote Controller</span>
+        </div>
+        <button type="button" id="btnCloseRemoteModal" class="welcome-close-btn" aria-label="Close remote pairing">&times;</button>
+      </div>
+      <div style="text-align: center; margin-bottom: 0.85rem;">
+        <h3 id="remoteTitle" style="margin: 0 0 0.35rem 0; font-size: 1.35rem; font-weight: 700; color: #ffffff;">📱 Mobile Remote Control</h3>
+        <p style="margin: 0; font-size: 0.88rem; color: var(--drawer-muted); line-height: 1.4;">
+          Scan this QR code with your smartphone camera to open the wireless pocket controller.
+        </p>
+        <div style="display: flex; align-items: center; justify-content: center; gap: 0.45rem; margin-top: 0.5rem; font-size: 0.76rem;">
+          <span style="color: var(--drawer-muted);">Session:</span>
+          <code id="remoteSessionBadge" style="background: rgba(255, 255, 255, 0.08); padding: 0.15rem 0.5rem; border-radius: 4px; font-family: monospace; color: var(--accent); font-size: 0.76rem;">tp_...</code>
+          <button type="button" id="btnNewSession" title="Generate new pairing session" style="background: none; border: none; font-size: 0.72rem; color: var(--accent); cursor: pointer; text-decoration: underline; padding: 0;">↺ New</button>
+        </div>
+        <div id="remotePeerStatus" style="display: none; align-items: center; justify-content: center; gap: 0.4rem; margin-top: 0.5rem; font-size: 0.8rem; color: #22c55e; font-weight: 600;">
+          <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 8px #22c55e;"></span>
+          <span>📱 Smartphone Connected</span>
+        </div>
+      </div>
+      <div id="remoteHostConfigSection" style="margin-bottom: 0.85rem; width: 100%; max-width: 320px; margin-left: auto; margin-right: auto;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+          <label for="remoteHostInput" style="font-size: 0.78rem; font-weight: 600; color: var(--drawer-muted);">
+            🌐 Smartphone Wi-Fi Host IP:
+          </label>
+          <div style="display: flex; gap: 0.45rem; align-items: center;">
+            <span id="remoteAutoDetectBadge" style="display: none; font-size: 0.7rem; color: var(--accent);"></span>
+            <button type="button" id="btnResetRemoteHost" style="background: none; border: none; font-size: 0.72rem; color: var(--accent); cursor: pointer; text-decoration: underline; padding: 0;">
+              Reset
+            </button>
+          </div>
+        </div>
+        <input type="text" id="remoteHostInput" class="select-input" placeholder="e.g. 192.168.1.50" style="font-size: 0.82rem; padding: 0.35rem 0.65rem;" autocomplete="off" spellcheck="false">
+        <p style="font-size: 0.72rem; color: var(--drawer-muted); margin-top: 0.3rem; line-height: 1.3;">
+          💡 In production (ghajba.github.io), phones connect automatically without IP configuration. For local testing, your phone connects via your PC's LAN Wi-Fi IP (e.g. <code>192.168.x.x</code>).
+        </p>
+      </div>
+      <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0.5rem 0 1rem;">
+        <div id="remoteQrCode" style="background: #ffffff; padding: 0.85rem; border-radius: 0.75rem; box-shadow: 0 0 24px rgba(0, 0, 0, 0.6); display: flex; align-items: center; justify-content: center; min-width: 200px; min-height: 200px;"></div>
+        <div style="margin-top: 1rem; display: flex; gap: 0.5rem; width: 100%; max-width: 320px;">
+          <input type="text" id="remotePairingUrl" readonly class="select-input" style="font-size: 0.8rem; text-overflow: ellipsis;">
+          <button type="button" id="btnCopyRemoteUrl" class="btn-mini" style="white-space: nowrap; padding: 0.4rem 0.8rem;">📋 Copy</button>
+        </div>
+        <span id="remoteCopyFeedback" style="font-size: 0.78rem; color: var(--accent); margin-top: 0.35rem; display: none;">Copied to clipboard!</span>
+      </div>
+      <div class="modal-actions" style="margin-top: 0.5rem; display: flex; justify-content: center;">
+        <button type="button" id="btnLaunchRemoteTab" class="btn-ctrl" style="border-color: var(--accent); color: var(--accent); width: 100%;">
+          🔗 Open Remote in New Tab
+        </button>
+      </div>
+    </div>
+  </div>
 
   <!-- Application Bootstrap -->
   <script type="module" src="js/app.js"></script>

@@ -1,18 +1,20 @@
 /**
  * Teleprompter Service Worker
- * Strategy: Cache-First for ultra-fast load and 100% offline-first reliability.
+ * Strategy: Cache-First with Network Fallback and Offline Pre-caching.
  */
 
-const CACHE_NAME = 'teleprompter-v1.0.1';
+const CACHE_NAME = 'teleprompter-v1.3.0';
 
 const PRECACHE_ASSETS = [
   './',
   './index.html',
+  './remote.html',
   './manifest.webmanifest',
   './icons/icon.svg',
   './css/main.css',
   './css/prompter.css',
   './css/sidebar.css',
+  './css/remote.css',
   './js/app.js',
   './js/version.js',
   './js/state.js',
@@ -21,17 +23,21 @@ const PRECACHE_ASSETS = [
   './js/controls.js',
   './js/ui/drawer.js',
   './js/ui/welcome.js',
-  './js/markdown.js'
+  './js/markdown.js',
+  './js/highlight.js',
+  './js/speech.js',
+  './js/qrcode.js',
+  './js/remote.js',
+  './js/remote-client.js'
 ];
 
 // Install Event: Pre-cache the entire application shell
 self.addEventListener('install', (event) => {
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[SW] Pre-caching offline application shell');
+      console.log('[SW] Pre-caching offline application shell:', CACHE_NAME);
       return cache.addAll(PRECACHE_ASSETS);
-    }).then(() => {
-      return self.skipWaiting();
     })
   );
 });
@@ -54,40 +60,106 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Fetch Event: Cache-First with Network Fallback
+// Fetch Event: Cache-First with robust Clean URL support & offline fallback
 self.addEventListener('fetch', (event) => {
-  // Only handle GET requests
   if (event.request.method !== 'GET') return;
 
   const url = new URL(event.request.url);
-
-  // Avoid intercepting browser extension or non-http requests
   if (!url.protocol.startsWith('http')) return;
 
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse;
+    (async () => {
+      // Helper to strip the redirected flag from responses.
+      // Chromium strictly aborts navigation requests with ERR_FAILED if respondWith resolves with response.redirected === true.
+      const sanitizeResponse = async (res) => {
+        if (!res || !res.redirected) return res;
+        const body = await res.blob();
+        return new Response(body, {
+          status: res.status || 200,
+          statusText: res.statusText || 'OK',
+          headers: res.headers
+        });
+      };
+
+      // 0. For local development hosts, prefer Network-First so code updates apply immediately
+      const isDevHost = url.hostname === 'localhost' ||
+                        url.hostname === '127.0.0.1' ||
+                        url.hostname.startsWith('192.168.') ||
+                        url.hostname.startsWith('172.') ||
+                        url.hostname.startsWith('10.');
+
+      if (isDevHost) {
+        try {
+          let networkResponse = await fetch(event.request);
+          if (networkResponse && networkResponse.redirected) {
+            networkResponse = await sanitizeResponse(networkResponse);
+          }
+          if (networkResponse && networkResponse.status === 200) {
+            const cache = await caches.open(CACHE_NAME);
+            cache.put(event.request, networkResponse.clone());
+          }
+          return networkResponse;
+        } catch {
+          // If offline in dev environment, fall through to cache below
+        }
       }
 
-      // If not in cache, fetch from network and dynamically cache
-      return fetch(event.request).then((networkResponse) => {
-        if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
-          return networkResponse;
+      // 1. Direct cache match (Production Cache-First for offline PWA speed)
+      const cached = await caches.match(event.request);
+      if (cached) {
+        return sanitizeResponse(cached);
+      }
+
+      // 2. Clean URL mapping for /remote or /remote.html
+      const cleanPath = url.pathname.replace(/\/index\.html$/, '').replace(/\/$/, '');
+      if (cleanPath.endsWith('/remote') || cleanPath.endsWith('/remote.html')) {
+        const cache = await caches.open(CACHE_NAME);
+        const remoteCached = await cache.match('./remote.html') ||
+                             await cache.match('remote.html') ||
+                             await caches.match('./remote.html') ||
+                             await caches.match('/remote.html');
+        if (remoteCached) {
+          return sanitizeResponse(remoteCached);
+        }
+      }
+
+      // 3. Network fetch with dynamic caching
+      try {
+        let networkResponse = await fetch(event.request);
+
+        // If server sent a redirect (e.g. 301 from /remote.html to /remote),
+        // fetch follows it, resulting in networkResponse.redirected === true.
+        // Sanitize it before caching or returning to respondWith.
+        if (networkResponse && networkResponse.redirected) {
+          networkResponse = await sanitizeResponse(networkResponse);
         }
 
-        const responseToCache = networkResponse.clone();
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, responseToCache);
-        });
-
+        if (networkResponse && networkResponse.status === 200) {
+          const cache = await caches.open(CACHE_NAME);
+          cache.put(event.request, networkResponse.clone());
+        }
         return networkResponse;
-      }).catch(() => {
-        // Fallback for document navigation if offline
+      } catch (err) {
+        // 4. Offline navigation fallback
         if (event.request.mode === 'navigate') {
-          return caches.match('./index.html');
+          if (url.pathname.includes('remote')) {
+            const remoteFallback = await caches.match('./remote.html') || await caches.match('/remote.html');
+            if (remoteFallback) {
+              return sanitizeResponse(remoteFallback);
+            }
+          }
+          const indexFallback = await caches.match('./index.html') || await caches.match('/');
+          if (indexFallback) {
+            return sanitizeResponse(indexFallback);
+          }
         }
-      });
-    })
+
+        return new Response('Offline - network request failed', {
+          status: 503,
+          statusText: 'Service Unavailable',
+          headers: { 'Content-Type': 'text/plain' }
+        });
+      }
+    })()
   );
 });

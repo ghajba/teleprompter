@@ -8,8 +8,11 @@ import { scroller } from './scroller.js';
 import { ControlsManager } from './controls.js';
 import { DrawerController } from './ui/drawer.js';
 import { WelcomeModalController } from './ui/welcome.js';
-import { renderMarkdown } from './markdown.js';
+import { renderMarkdown, renderPlainText } from './markdown.js';
 import { APP_VERSION } from './version.js';
+import { highlightController } from './highlight.js';
+import { speechEngine } from './speech.js';
+import { remoteHost } from './remote.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   const prompterContainer = document.getElementById('prompterContainer');
@@ -21,6 +24,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const hudStatus = document.getElementById('hudStatus');
   const hudTime = document.getElementById('hudTime');
   const hudWpm = document.getElementById('hudWpm');
+  const hudVoice = document.getElementById('hudVoice');
+  const hudVoiceStatus = document.getElementById('hudVoiceStatus');
   const appVersionWatermark = document.getElementById('appVersionWatermark');
 
   // Dynamic version stamping across all version badges
@@ -40,7 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
       prompterTextInner.innerHTML = renderMarkdown(initialText);
     } else {
       prompterTextInner.classList.add('plain-text');
-      prompterTextInner.textContent = initialText;
+      prompterTextInner.innerHTML = renderPlainText(initialText);
     }
   }
 
@@ -62,6 +67,42 @@ document.addEventListener('DOMContentLoaded', () => {
   controlsManager.init();
   drawerController.init(controlsManager, () => welcomeController.open());
   welcomeController.init();
+
+  // Mount Reading Highlight & Voice Follow engines
+  highlightController.init({
+    containerEl: prompterContainer,
+    textInnerEl: prompterTextInner
+  });
+
+  scroller.setOnRender(() => {
+    highlightController.scheduleUpdate();
+  });
+
+  scroller.setOnReset(() => {
+    speechEngine.resetProgress();
+  });
+
+  speechEngine.init();
+  remoteHost.init();
+
+  speechEngine.onStatusChange((status) => {
+    if (!hudVoice || !hudVoiceStatus) return;
+    const enabled = store.getState().voiceFollowEnabled;
+    if (!enabled) {
+      hudVoice.classList.add('hidden');
+      return;
+    }
+    hudVoice.classList.remove('hidden');
+    if (status === 'listening') {
+      hudVoiceStatus.textContent = 'Listening...';
+    } else if (status === 'unsupported') {
+      hudVoiceStatus.textContent = 'Not Supported';
+    } else if (status === 'error') {
+      hudVoiceStatus.textContent = 'Mic Error';
+    } else {
+      hudVoiceStatus.textContent = 'Voice Ready';
+    }
+  });
 
   // Periodic metrics update for HUD (every 250ms)
   setInterval(() => {
@@ -113,11 +154,21 @@ document.addEventListener('DOMContentLoaded', () => {
           prompterTextInner.innerHTML = renderMarkdown(state.text || '');
         } else {
           prompterTextInner.classList.add('plain-text');
-          prompterTextInner.textContent = state.text || '';
+          prompterTextInner.innerHTML = renderPlainText(state.text || '');
         }
+        speechEngine.indexScript();
+        highlightController.updateFocus();
       } else if (prompterText) {
         prompterText.textContent = state.text || '';
       }
+    }
+
+    if (changedKeys.includes('readingHighlightMode')) {
+      highlightController.applyMode(state.readingHighlightMode || 'none');
+    }
+
+    if (changedKeys.includes('voiceFollowEnabled') && hudVoice) {
+      hudVoice.classList.toggle('hidden', !state.voiceFollowEnabled);
     }
 
     if (changedKeys.includes('isMirrored') && mirrorBox) {
@@ -186,7 +237,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js')
+      navigator.serviceWorker.register('./sw.js?v=1.2.0')
         .then((reg) => {
           console.log('[PWA] Service Worker registered with scope:', reg.scope);
           // Check for newer versions on server
@@ -205,10 +256,20 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
           const registrations = await navigator.serviceWorker.getRegistrations();
           for (const reg of registrations) {
-            await reg.update();
+            await reg.unregister();
           }
         } catch (err) {
-          console.warn('[PWA] Update check failed:', err);
+          console.warn('[PWA] Unregister failed:', err);
+        }
+      }
+      if ('caches' in window) {
+        try {
+          const keys = await caches.keys();
+          for (const key of keys) {
+            await caches.delete(key);
+          }
+        } catch (err) {
+          console.warn('[PWA] Cache purge failed:', err);
         }
       }
       window.location.reload();

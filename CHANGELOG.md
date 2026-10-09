@@ -7,6 +7,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.1.0] - 2026-10-09
+
+### Added
+- **📱 Wireless Smartphone Remote Control:**
+  - Standalone touch-first mobile remote UI (`remote.html`) designed for thumb operation with tactile buttons: `[▶ Play / ⏸ Pause]`, `[➕ 5 WPM]`, `[➖ 5 WPM]`, `[⏪ Step Back]`, `[⏩ Step Fwd]`, `[↺ Reset Top]`, and `[🔄 Reverse]`.
+  - Haptic feedback vibration (`navigator.vibrate`) on touch interactions.
+  - Live bidirectional synchronization: reading progress bar, remaining time timer (`⏱ MM:SS`), and current speaking pace updated in real time on the controller.
+  - **Zero-Dependency Pairing & Dual-Layer Transport:**
+    - **Local Presenter:** Instant zero-latency cross-tab connection via `BroadcastChannel` for same-device multi-monitor setups.
+    - **Cross-Device Smartphone:** Secure real-time WebSocket relay (`wss://itty.ws/c/...`) with cryptographically secure 96-bit SHA-256 session tokens.
+    - **Offline QR Code Generator:** Native pure JavaScript SVG QR-code generation on canvas with zero external libraries.
+    - **Local Wi-Fi IP Auto-Detection:** Zero-dependency browser WebRTC ICE interface discovery automatically sniffs the presenter's LAN/Wi-Fi IPv4 address on `localhost` dev servers.
+    - **Smart Pairing Modal Dismissal:** Automatically flashes connected status and closes the QR pairing modal when the smartphone joins the session.
+
+- **🎙️ Native Multilingual Voice Follow (Beszédkövetés):**
+  - 100% browser-native client-side speech recognition (`Web Speech API`) with zero cloud latency and complete offline privacy.
+  - **Dual Scroll Behaviors:**
+    - `Pure Voice Scroll (Voice-Driven)`: Prompter advances strictly as you read. If you pause, cough, or take a breath, scrolling stops instantly and waits.
+    - `Assisted Pace`: Smooth continuous WPM scrolling that dynamically accelerates (+25%) or decelerates (-30%) if you speak ahead or behind the reading eyeline.
+  - **Intelligent Playback Lifecycle:** Microphone strictly listens only when playback is active (`isPlaying === true`); pauses completely while prompter is stopped or counting down.
+  - **Stage Direction (`[Cue]`) & Pause Bar Exclusion:** Markdown stage cues (`[Pause 2s]`, `[Look at camera]`) and horizontal breaks (`---`) are completely filtered out from speech alignment, allowing presenters to observe directions without speaking them.
+  - **Monotonic Forward Alignment & Jitter Elimination:** Multi-token sequence matching prevents interim speech result jitter and eliminates erratic jumping.
+  - **Multilingual Support:** Auto-detection with optimized vocabulary heuristics for Hungarian (`hu-HU`), German (`de-DE` with Eszett `ß` and umlaut normalization), English (`en-US`, `en-GB`), Spanish (`es-ES`), and French (`fr-FR`).
+
+- **🎯 Reading Highlight Focus Modes:**
+  - `Dim Inactive Lines`: Inactive lines fade to 32% opacity, putting high visual contrast and text glow on the active line crossing the eyeline.
+  - `Accent Bar & Glow`: Adds a prominent cyan accent bar (`border-left`) and cyan glow to the active reading line.
+  - Fully compatible with both rich Markdown formatting and unformatted Plain Text (`renderPlainText`).
+  - Direct physical eyeline coordinate intersection detection to prevent line flickering.
+
+### Fixed
+- **Mobile Header & HUD Collision:** Responsive `@media (max-width: 640px)` rule collapses the settings toggle into a compact 42px circular gear icon, preventing UI overlap on narrow smartphone screens (<420px).
+- **Service Worker Navigation Redirect:** Resolved Chromium `ERR_FAILED` on dev servers when navigating to `/remote.html` via sanitized synthetic responses.
+- **Network-First Dev Caching:** Configured Service Worker with network-first strategy on local development hosts (`localhost`, LAN IPs) to avoid stale dev script caching.
+
+---
+
 ## [1.0.1] - 2026-09-20
 
 ### Fixed
